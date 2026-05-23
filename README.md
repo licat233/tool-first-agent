@@ -100,6 +100,62 @@ Make sure the scripts are executable:
 chmod +x ~/.hermes/skills/devops/tool-first-agent/scripts/*
 ```
 
+## Agent Prompt Integration
+
+Installing the skill is not enough by itself. The agent also needs a short
+global rule that tells it when to load the skill.
+
+Add a compact rule like this to your global `SOUL.md`, profile system prompt, or
+equivalent agent instruction file:
+
+```markdown
+## Tool-First Rule
+
+Before writing custom scripts, installing new utilities, or handling files/data
+with ad-hoc code, load and follow the `tool-first-agent` skill.
+
+This applies to file conversion, document parsing, text search, compression,
+image/media processing, JSON/CSV/YAML/XML/SQLite work, web scraping, API
+interaction, package/tool installation, and similar tool-shaped tasks.
+
+Use existing local tools when the task can be solved in 1-3 commands. Do not
+write replacement scripts for tasks already covered by the `tool-first-agent`
+registry or verified Hindsight `tool-inventory` memories.
+
+Write custom code only when no suitable tool exists, the tool fails, or the task
+requires custom logic.
+```
+
+For Hermes, a practical global location is:
+
+```text
+~/.hermes/SOUL.md
+```
+
+If you use multiple Hermes profiles, avoid manually copying this rule into every
+profile. Prefer a generated SOUL layout:
+
+```text
+~/.hermes/SOUL.md
+  global rules, including the Tool-First Rule
+
+~/.hermes/profiles/<profile>/SOUL.md.profile
+  profile-specific rules
+
+~/.hermes/profiles/<profile>/SOUL.md
+  generated file = global rules + profile extension
+```
+
+Then regenerate profile prompts after changing global rules:
+
+```bash
+~/.hermes/scripts/sync-soul.sh --force
+```
+
+The important part is that the final system prompt for every active agent
+contains the short Tool-First Rule. The detailed workflow and tool registry stay
+inside this skill.
+
 ## Basic Workflow
 
 Find candidate tools for a task:
