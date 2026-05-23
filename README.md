@@ -4,6 +4,8 @@
 
 [Claude Code Chinese install guide](CLAUDE-CODE-INSTALL.zh-CN.md)
 
+[Codex Chinese install guide](CODEX-INSTALL.zh-CN.md)
+
 Tool First Agent is a Hermes/Codex-style agent skill that helps AI agents use
 existing local tools before writing new scripts.
 

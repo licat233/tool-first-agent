@@ -96,6 +96,10 @@ chmod +x ~/.hermes/skills/devops/tool-first-agent/scripts/*
 
 [Claude Code 安装与接入指南](CLAUDE-CODE-INSTALL.zh-CN.md)
 
+如果你要接入 Codex，请看专门文档：
+
+[Codex 安装与接入指南](CODEX-INSTALL.zh-CN.md)
+
 ## 接入 Agent 的 System Prompt
 
 只安装 skill 还不够。Agent 的 System Prompt、`SOUL.md` 或类似规则文件里，需要明确告诉它什么时候调用这个 skill。
