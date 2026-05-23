@@ -1,5 +1,5 @@
 ---
-name: tool-first-inventory
+name: tool-first-agent
 description: |
   Use this skill before writing scripts, installing tools, or handling files/data
   when an existing local tool may already solve the task. It provides a tool-first
@@ -7,7 +7,7 @@ description: |
   default-bank memories tagged as tool-inventory.
 ---
 
-# Tool First Inventory
+# Tool First Agent
 
 Use this skill when the user asks to process files, convert formats, search text,
 handle JSON/CSV/XML/SQLite, work with PDF/Office documents, process images/audio/video,
@@ -33,22 +33,22 @@ binary on disk.
 
 ```bash
 # 1. Find candidate tools for a category or task
-python3 ~/.hermes/skills/devops/tool-first-inventory/scripts/query-registry.py \
+python3 ~/.hermes/skills/devops/tool-first-agent/scripts/query-registry.py \
   --category document --task "extract docx text"
 
 # 2. Detect only those tools
-python3 ~/.hermes/skills/devops/tool-first-inventory/scripts/detect-tools.py \
+python3 ~/.hermes/skills/devops/tool-first-agent/scripts/detect-tools.py \
   --category document
 
 # 3. Recall shared tool experience from Hindsight
-bash ~/.hermes/skills/devops/tool-first-inventory/scripts/recall-tool-memory.sh \
+bash ~/.hermes/skills/devops/tool-first-agent/scripts/recall-tool-memory.sh \
   "extract docx text"
 ```
 
 After a tool succeeds, retain the reusable result:
 
 ```bash
-python3 ~/.hermes/skills/devops/tool-first-inventory/scripts/retain-tool-memory.py \
+python3 ~/.hermes/skills/devops/tool-first-agent/scripts/retain-tool-memory.py \
   --record-type recipe \
   --category document \
   --task extract_text_from_docx \
@@ -60,7 +60,7 @@ python3 ~/.hermes/skills/devops/tool-first-inventory/scripts/retain-tool-memory.
 Register a newly installed tool:
 
 ```bash
-python3 ~/.hermes/skills/devops/tool-first-inventory/scripts/register-tool.py qlmarkdown_cli \
+python3 ~/.hermes/skills/devops/tool-first-agent/scripts/register-tool.py qlmarkdown_cli \
   --category document \
   --priority 25 \
   --handle "Fast batch conversion from Markdown to HTML" \

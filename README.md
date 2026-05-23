@@ -1,6 +1,6 @@
-# Tool First Inventory
+# Tool First Agent
 
-Tool First Inventory is a Hermes/Codex-style agent skill that helps AI agents use
+Tool First Agent is a Hermes/Codex-style agent skill that helps AI agents use
 existing local tools before writing new scripts.
 
 It is designed for a common agent failure mode: the agent sees a simple task like
@@ -90,14 +90,14 @@ Clone or copy this folder into your Hermes skills directory, for example:
 
 ```bash
 mkdir -p ~/.hermes/skills/devops
-git clone https://github.com/licat233/tool-first-inventory.git \
-  ~/.hermes/skills/devops/tool-first-inventory
+git clone https://github.com/licat233/tool-first-agent.git \
+  ~/.hermes/skills/devops/tool-first-agent
 ```
 
 Make sure the scripts are executable:
 
 ```bash
-chmod +x ~/.hermes/skills/devops/tool-first-inventory/scripts/*
+chmod +x ~/.hermes/skills/devops/tool-first-agent/scripts/*
 ```
 
 ## Basic Workflow
@@ -105,7 +105,7 @@ chmod +x ~/.hermes/skills/devops/tool-first-inventory/scripts/*
 Find candidate tools for a task:
 
 ```bash
-python3 ~/.hermes/skills/devops/tool-first-inventory/scripts/query-registry.py \
+python3 ~/.hermes/skills/devops/tool-first-agent/scripts/query-registry.py \
   --category document \
   --task "markdown html fast"
 ```
@@ -113,14 +113,14 @@ python3 ~/.hermes/skills/devops/tool-first-inventory/scripts/query-registry.py \
 Detect only the tools in one category:
 
 ```bash
-python3 ~/.hermes/skills/devops/tool-first-inventory/scripts/detect-tools.py \
+python3 ~/.hermes/skills/devops/tool-first-agent/scripts/detect-tools.py \
   --category document
 ```
 
 Detect one specific tool:
 
 ```bash
-python3 ~/.hermes/skills/devops/tool-first-inventory/scripts/detect-tools.py \
+python3 ~/.hermes/skills/devops/tool-first-agent/scripts/detect-tools.py \
   --tool qlmarkdown_cli \
   --json
 ```
@@ -128,7 +128,7 @@ python3 ~/.hermes/skills/devops/tool-first-inventory/scripts/detect-tools.py \
 Recall prior tool experience from Hindsight:
 
 ```bash
-bash ~/.hermes/skills/devops/tool-first-inventory/scripts/recall-tool-memory.sh \
+bash ~/.hermes/skills/devops/tool-first-agent/scripts/recall-tool-memory.sh \
   "convert markdown to html" \
   document
 ```
@@ -138,7 +138,7 @@ bash ~/.hermes/skills/devops/tool-first-inventory/scripts/recall-tool-memory.sh 
 After installing a new tool, register it in `registry/tools.yaml`:
 
 ```bash
-python3 ~/.hermes/skills/devops/tool-first-inventory/scripts/register-tool.py qlmarkdown_cli \
+python3 ~/.hermes/skills/devops/tool-first-agent/scripts/register-tool.py qlmarkdown_cli \
   --category document \
   --priority 25 \
   --handle "Fast batch conversion from Markdown to HTML" \
@@ -152,7 +152,7 @@ not write a recipe to Hindsight.
 To also retain the tool availability result in Hindsight:
 
 ```bash
-python3 ~/.hermes/skills/devops/tool-first-inventory/scripts/register-tool.py qlmarkdown_cli \
+python3 ~/.hermes/skills/devops/tool-first-agent/scripts/register-tool.py qlmarkdown_cli \
   --category document \
   --priority 25 \
   --handle "Fast batch conversion from Markdown to HTML" \
@@ -169,7 +169,7 @@ verified recipe only after the tool has successfully completed a real task.
 When a command succeeds in a real task, retain a verified recipe:
 
 ```bash
-python3 ~/.hermes/skills/devops/tool-first-inventory/scripts/retain-tool-memory.py \
+python3 ~/.hermes/skills/devops/tool-first-agent/scripts/retain-tool-memory.py \
   --record-type recipe \
   --category document \
   --task extract_text_from_docx \
@@ -181,7 +181,7 @@ python3 ~/.hermes/skills/devops/tool-first-inventory/scripts/retain-tool-memory.
 When a tool fails in a meaningful way, retain a scoped failure:
 
 ```bash
-python3 ~/.hermes/skills/devops/tool-first-inventory/scripts/retain-tool-memory.py \
+python3 ~/.hermes/skills/devops/tool-first-agent/scripts/retain-tool-memory.py \
   --record-type failure \
   --category document \
   --task convert_legacy_doc_to_docx \
@@ -262,4 +262,3 @@ Hindsight memory = verified local experience
 This prevents agents from treating a theoretical command template as a proven
 solution. The registry helps the agent discover what to try; Hindsight helps it
 remember what actually worked.
-
