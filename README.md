@@ -1,5 +1,7 @@
 # Tool First Agent
 
+[中文说明](README.zh-CN.md)
+
 Tool First Agent is a Hermes/Codex-style agent skill that helps AI agents use
 existing local tools before writing new scripts.
 
