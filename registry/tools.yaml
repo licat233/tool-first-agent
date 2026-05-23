@@ -1,0 +1,370 @@
+document:
+  description: "Document extraction and format conversion"
+  tools:
+    markitdown:
+      priority: 10
+      detect_names: [markitdown]
+      version_args: ["--version"]
+      handles: ["Read PDF, Word, Excel, PowerPoint, images into Markdown"]
+      commands:
+        extract_to_markdown: "markitdown {input}"
+      fallbacks: [pandoc, textutil]
+    pandoc:
+      priority: 20
+      detect_names: [pandoc]
+      version_args: ["--version"]
+      handles: ["Convert Markdown, DOCX, HTML, EPUB and many text document formats"]
+      commands:
+        extract_docx_text: "pandoc {input} -t plain"
+        docx_to_markdown: "pandoc {input} -t markdown -o {output}"
+        markdown_to_docx: "pandoc {input} -o {output}"
+      fallbacks: [markitdown, libreoffice, textutil]
+    qlmarkdown_cli:
+      priority: 25
+      detect_names: [qlmarkdown_cli]
+      known_paths:
+        - "~/.local/bin/qlmarkdown_cli"
+      app_bundle_paths:
+        - "/Applications/QLMarkdown.app/Contents/Resources/qlmarkdown_cli"
+      version_args: ["--version"]
+      handles: ["Fast batch conversion from Markdown to HTML using QLMarkdown"]
+      commands:
+        markdown_to_html: "qlmarkdown_cli {input} -o {output}"
+        markdown_to_html_batch: "qlmarkdown_cli {inputs} -o {outdir}"
+      fallbacks: [pandoc]
+    libreoffice:
+      priority: 30
+      detect_names: [libreoffice, soffice]
+      app_bundle_paths:
+        - "/Applications/LibreOffice.app/Contents/MacOS/soffice"
+      version_args: ["--version"]
+      handles: ["Convert legacy Office documents and Office formats headlessly"]
+      commands:
+        convert_to_docx: "soffice --headless --convert-to docx --outdir {outdir} {input}"
+      fallbacks: [pandoc, textutil]
+    textutil:
+      priority: 40
+      detect_names: [textutil]
+      version_args: ["-help"]
+      handles: ["macOS built-in document text conversion for supported formats"]
+      commands:
+        convert_to_txt: "textutil -convert txt {input} -output {output}"
+      fallbacks: [pandoc]
+
+pdf:
+  description: "PDF extraction, inspection, rendering, and structure operations"
+  tools:
+    markitdown:
+      priority: 10
+      detect_names: [markitdown]
+      version_args: ["--version"]
+      handles: ["Extract PDF content to Markdown"]
+      commands:
+        pdf_to_markdown: "markitdown {input}"
+      fallbacks: [pdftotext, pymupdf]
+    pdftotext:
+      priority: 20
+      detect_names: [pdftotext]
+      version_args: ["-v"]
+      handles: ["Extract plain text from PDFs"]
+      commands:
+        pdf_to_text: "pdftotext {input} -"
+      fallbacks: [markitdown]
+    pdfinfo:
+      priority: 30
+      detect_names: [pdfinfo]
+      version_args: ["-v"]
+      handles: ["Inspect PDF metadata and page count"]
+      commands:
+        inspect_pdf: "pdfinfo {input}"
+      fallbacks: []
+    qpdf:
+      priority: 40
+      detect_names: [qpdf]
+      version_args: ["--version"]
+      handles: ["PDF split, merge, decrypt, structural transformations"]
+      commands:
+        check_pdf: "qpdf --check {input}"
+      fallbacks: []
+
+image:
+  description: "Image conversion, resize, OCR, and metadata"
+  tools:
+    magick:
+      priority: 10
+      detect_names: [magick, convert]
+      version_args: ["--version"]
+      handles: ["Convert, resize, crop, compress, compose images"]
+      commands:
+        resize: "magick {input} -resize {size} {output}"
+        convert: "magick {input} {output}"
+      fallbacks: [sips]
+    sips:
+      priority: 20
+      detect_names: [sips]
+      version_args: ["--help"]
+      handles: ["macOS built-in image conversion and resizing"]
+      commands:
+        resize_width: "sips --resampleWidth {width} {input} --out {output}"
+      fallbacks: [magick]
+    tesseract:
+      priority: 30
+      detect_names: [tesseract]
+      version_args: ["--version"]
+      handles: ["OCR images"]
+      commands:
+        ocr_stdout: "tesseract {input} stdout"
+      fallbacks: [markitdown]
+    exiftool:
+      priority: 40
+      detect_names: [exiftool]
+      version_args: ["-ver"]
+      handles: ["Read and write image metadata"]
+      commands:
+        metadata: "exiftool {input}"
+      fallbacks: []
+
+media:
+  description: "Audio and video conversion, probing, and compression"
+  tools:
+    ffmpeg:
+      priority: 10
+      detect_names: [ffmpeg]
+      version_args: ["-version"]
+      handles: ["Convert, compress, trim, mux, demux audio/video"]
+      commands:
+        convert_media: "ffmpeg -i {input} {output}"
+        extract_audio: "ffmpeg -i {input} -vn {output}"
+      fallbacks: []
+    ffprobe:
+      priority: 20
+      detect_names: [ffprobe]
+      version_args: ["-version"]
+      handles: ["Inspect media metadata and streams"]
+      commands:
+        inspect_media: "ffprobe {input}"
+      fallbacks: []
+
+data:
+  description: "Structured data processing"
+  tools:
+    jq:
+      priority: 10
+      detect_names: [jq]
+      version_args: ["--version"]
+      handles: ["JSON query, filtering, transformation"]
+      commands:
+        query_json: "jq '{filter}' {input}"
+      fallbacks: [python3]
+    yq:
+      priority: 20
+      detect_names: [yq]
+      version_args: ["--version"]
+      handles: ["YAML, JSON, XML, CSV/TOML processing depending on yq variant"]
+      commands:
+        query_yaml: "yq '{filter}' {input}"
+      fallbacks: [python3]
+    sqlite3:
+      priority: 30
+      detect_names: [sqlite3]
+      version_args: ["--version"]
+      handles: ["SQLite database inspection and queries"]
+      commands:
+        query_db: "sqlite3 {database} '{sql}'"
+      fallbacks: []
+
+search:
+  description: "Text search, file discovery, and fuzzy filtering"
+  tools:
+    rg:
+      priority: 10
+      detect_names: [rg, ripgrep]
+      version_args: ["--version"]
+      handles: ["Fast recursive text search"]
+      commands:
+        search_text: "rg {pattern} {path}"
+      fallbacks: [grep]
+    fd:
+      priority: 20
+      detect_names: [fd, fdfind]
+      version_args: ["--version"]
+      handles: ["Fast file search by name/pattern"]
+      commands:
+        find_files: "fd {pattern} {path}"
+      fallbacks: [find]
+    fzf:
+      priority: 30
+      detect_names: [fzf]
+      version_args: ["--version"]
+      handles: ["Interactive fuzzy filtering"]
+      commands:
+        filter_list: "fzf"
+      fallbacks: []
+
+archive:
+  description: "Compression and archive handling"
+  tools:
+    unzip:
+      priority: 10
+      detect_names: [unzip]
+      version_args: ["-v"]
+      handles: ["Extract zip archives"]
+      commands:
+        unzip: "unzip {input} -d {outdir}"
+      fallbacks: []
+    zip:
+      priority: 20
+      detect_names: [zip]
+      version_args: ["-v"]
+      handles: ["Create zip archives"]
+      commands:
+        zip: "zip -r {output} {input}"
+      fallbacks: []
+    tar:
+      priority: 30
+      detect_names: [tar]
+      version_args: ["--version"]
+      handles: ["Create and extract tar archives"]
+      commands:
+        extract: "tar -xf {input} -C {outdir}"
+      fallbacks: []
+    zstd:
+      priority: 40
+      detect_names: [zstd, unzstd]
+      version_args: ["--version"]
+      handles: ["Compress/decompress zstd files"]
+      commands:
+        decompress: "unzstd {input}"
+      fallbacks: [gzip]
+
+dev:
+  description: "Development tooling"
+  tools:
+    git:
+      priority: 10
+      detect_names: [git]
+      version_args: ["--version"]
+      handles: ["Version control and repository inspection"]
+      commands:
+        status: "git status --short"
+      fallbacks: []
+    gh:
+      priority: 20
+      detect_names: [gh]
+      version_args: ["--version"]
+      handles: ["GitHub repository and PR operations"]
+      commands:
+        auth_status: "gh auth status"
+      fallbacks: [git]
+    uv:
+      priority: 30
+      detect_names: [uv]
+      version_args: ["--version"]
+      handles: ["Python package, project, and tool management"]
+      commands:
+        tool_list: "uv tool list"
+      fallbacks: [python3]
+    node:
+      priority: 40
+      detect_names: [node]
+      version_args: ["--version"]
+      handles: ["JavaScript runtime"]
+      commands:
+        version: "node --version"
+      fallbacks: []
+    npm:
+      priority: 50
+      detect_names: [npm]
+      version_args: ["--version"]
+      handles: ["Node package management"]
+      commands:
+        version: "npm --version"
+      fallbacks: []
+    python3:
+      priority: 60
+      detect_names: [python3]
+      version_args: ["--version"]
+      handles: ["Python runtime for complex scripts when tools are insufficient"]
+      commands:
+        version: "python3 --version"
+      fallbacks: []
+
+web:
+  description: "Web access, search, scraping, and browser automation"
+  tools:
+    curl:
+      priority: 10
+      detect_names: [curl]
+      version_args: ["--version"]
+      handles: ["HTTP requests and downloads"]
+      commands:
+        fetch: "curl -L {url}"
+      fallbacks: [wget]
+    tvly:
+      priority: 20
+      detect_names: [tvly]
+      version_args: ["--help"]
+      handles: ["Tavily web search from CLI"]
+      commands:
+        search: "tvly search {query}"
+      fallbacks: []
+    firecrawl:
+      priority: 30
+      detect_names: [firecrawl]
+      version_args: ["--help"]
+      handles: ["Web search, scrape, crawl, and structured extraction"]
+      commands:
+        search: "firecrawl search {query}"
+      fallbacks: [curl]
+    browser-use:
+      priority: 40
+      detect_names: [browser-use, browseruse, bu]
+      version_args: ["--help"]
+      handles: ["Browser automation for dynamic pages"]
+      commands:
+        headed: "browser-use --headed"
+      fallbacks: []
+
+ai:
+  description: "Local AI, coding agents, and memory tools"
+  tools:
+    hermes:
+      priority: 10
+      detect_names: [hermes]
+      version_args: ["--version"]
+      handles: ["Primary agent framework"]
+      commands:
+        version: "hermes --version"
+      fallbacks: [claude, codex]
+    hindsight:
+      priority: 20
+      detect_names: [hindsight]
+      version_args: ["--version"]
+      handles: ["Shared memory CLI"]
+      commands:
+        health: "hindsight health"
+      fallbacks: []
+    claude:
+      priority: 30
+      detect_names: [claude]
+      version_args: ["--version"]
+      handles: ["Claude Code assistant"]
+      commands:
+        version: "claude --version"
+      fallbacks: [codex]
+    codex:
+      priority: 40
+      detect_names: [codex]
+      version_args: ["--version"]
+      handles: ["OpenAI Codex assistant"]
+      commands:
+        version: "codex --version"
+      fallbacks: [claude]
+    ollama:
+      priority: 50
+      detect_names: [ollama]
+      version_args: ["--version"]
+      handles: ["Local LLM runner"]
+      commands:
+        list_models: "ollama list"
+      fallbacks: []
