@@ -89,6 +89,13 @@ cd tool-first-agent
 # Build
 cargo build --release
 
+# Build universal binary (x86_64 + ARM64, macOS only)
+rustup target add aarch64-apple-darwin
+cargo build --release --target aarch64-apple-darwin
+lipo -create target/release/tool-first \
+             target/aarch64-apple-darwin/release/tool-first \
+     -output target/release/tool-first
+
 # Run diagnostics
 ./target/release/tool-first doctor
 
@@ -324,7 +331,8 @@ tool-first-agent/
 ### Requirements
 
 - Rust 1.75+
-- No external runtime dependencies (SQLite is bundled via `rusqlite/bundled`)
+- macOS (x86_64 / ARM64), Linux
+- No external runtime dependencies (SQLite was removed; file-only storage)
 
 ### License
 
@@ -379,6 +387,13 @@ cd tool-first-agent
 
 # 编译
 cargo build --release
+
+# 编译 universal binary（x86_64 + ARM64，仅 macOS）
+rustup target add aarch64-apple-darwin
+cargo build --release --target aarch64-apple-darwin
+lipo -create target/release/tool-first \
+             target/aarch64-apple-darwin/release/tool-first \
+     -output target/release/tool-first
 
 # 运行诊断
 ./target/release/tool-first doctor
