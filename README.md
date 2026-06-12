@@ -83,31 +83,21 @@ Before writing code → Load skill → Classify task → Query registry → Dete
 ### Quick Start
 
 ```bash
-git clone https://github.com/licat233/tool-first-agent.git
-cd tool-first-agent
+# Download pre-built binary (macOS, no Rust required)
+curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.1.0/tool-first-universal-apple-darwin.tar.gz | tar xz
+mv tool-first-universal /usr/local/bin/tool-first
 
-# Build
-cargo build --release
-
-# Build universal binary (x86_64 + ARM64, macOS only)
-rustup target add aarch64-apple-darwin
-cargo build --release --target aarch64-apple-darwin
-lipo -create target/release/tool-first \
-             target/aarch64-apple-darwin/release/tool-first \
-     -output target/release/tool-first
-
-# Run diagnostics
-./target/release/tool-first doctor
-
-# Resolve memory home
-./target/release/tool-first memory resolve --json
+# Verify
+tool-first doctor
 
 # Query registry
-./target/release/tool-first registry query --category document --json
+tool-first registry query --category document --json
 
 # Detect tools
-./target/release/tool-first tools detect --category document --json
+tool-first tools detect --category document --json
 ```
+
+> Linux users: build from source with `cargo build --release` (requires Rust 1.75+).
 
 ### CLI Commands
 
@@ -243,20 +233,83 @@ SKILL.md is the canonical execution rule source.
 The Rust runtime core provides CLI and MCP access.
 Do not create or duplicate full tool-first rules under 02-Rules/Tool-Inventory or any other Vault rule directory.
 
-Build:
-cargo build --release
-cp target/release/tool-first /usr/local/bin/
+## Step 1: Download binary
+
+Download the pre-built binary from GitHub Releases (no Rust required):
+
+macOS (universal, Intel + Apple Silicon):
+  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.1.0/tool-first-universal-apple-darwin.tar.gz | tar xz
+  mv tool-first-universal /usr/local/bin/tool-first
+
+macOS (Apple Silicon only):
+  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.1.0/tool-first-aarch64-apple-darwin.tar.gz | tar xz
+  mv tool-first-aarch64 /usr/local/bin/tool-first
+
+macOS (Intel only):
+  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.1.0/tool-first-x86_64-apple-darwin.tar.gz | tar xz
+  mv tool-first-x86_64 /usr/local/bin/tool-first
+
+If no pre-built binary is available for your platform, build from source:
+  git clone https://github.com/licat233/tool-first-agent.git
+  cd tool-first-agent
+  cargo build --release
+  cp target/release/tool-first /usr/local/bin/
+
+## Step 2: Install skill files
+
+Clone the repo to the agent's skill directory:
+
+  git clone https://github.com/licat233/tool-first-agent.git /path/to/agent/skill/dir/tool-first-agent
+
+Or download and extract the source archive.
+
+## Step 3: Configure the Tool-First Rule
+
+THIS STEP IS REQUIRED. Without it, the agent will not auto-trigger tool-first behavior.
+
+For Hermes Agent — add to ~/.hermes/SOUL.md:
+
+  ## Tool-First Rule (G4)
+  Before writing custom scripts, installing tools, or handling files/data, always check whether an existing local tool already solves the problem.
+  1. Classify the task into a category: document, pdf, image, media, data, search, archive, dev, web, ai.
+  2. Resolve the shared tool-memory home — check TOOL_FIRST_MEMORY_HOME.
+  3. Query the registry: tool-first registry query --category <cat>
+  4. Detect only those candidates: tool-first tools detect --category <cat>
+  5. Recall past experience: tool-first memory recall --task "<description>"
+  6. Use an existing tool when 1–3 commands can solve the task.
+  7. Write code only when tools are missing, fail, or the task requires custom logic.
+  If writing code, briefly state why: "No existing tool fits because …"
+  tool-memory is shared runtime infrastructure, not authoritative Vault memory.
+  SKILL.md is the sole execution rule source.
+
+For Claude Code — add to ~/.claude/CLAUDE.md:
+
+  ## Tool-First Rule
+  Before writing custom scripts, installing new software, or handling files/data with ad-hoc code, check if an existing local tool already solves the problem.
+  1. Classify the task into a category: document, pdf, image, media, data, search, archive, dev, web, ai.
+  2. Resolve the shared tool-memory home — check TOOL_FIRST_MEMORY_HOME env var.
+  3. Query the registry: tool-first registry query --category <cat> --json
+  4. Detect only those candidates: tool-first tools detect --category <cat> --json
+  5. Recall past experience: tool-first memory recall --task "<description>" --json
+  6. Use an existing tool when 1–3 commands can solve the task.
+  7. Write code only when tools are missing, fail, or the task requires custom logic.
+  If writing code, briefly state why: "No existing tool fits because …"
+  tool-memory is shared runtime infrastructure, not authoritative Vault memory.
+  SKILL.md is the sole execution rule source.
+
+For Codex — add to ~/.codex/AGENTS.md:
+
+  Same rule text as Claude Code above.
+
+## Step 4: Verify
+
+Run `tool-first doctor` to verify the setup.
+Run `tool-first memory resolve --json` to check memory home resolution.
 
 Before writing custom code for file conversion, document processing, PDF handling,
 image/media processing, archive operations, data transformation, search, web
 extraction, or development utility tasks, first check whether an existing local
 tool or verified recipe can solve the task.
-
-Run `tool-first doctor` to verify the setup.
-Run `tool-first memory resolve --json` to check memory home resolution.
-Run `tool-first registry query --category <cat>` to find candidate tools.
-Run `tool-first tools detect --category <cat>` to check installed tools.
-Run `tool-first memory recall --task "<description>"` to recall past experience.
 
 If `TOOL_FIRST_MEMORY_HOME` is set:
 1. Treat it as the canonical shared runtime tool-memory home.
@@ -291,10 +344,9 @@ Final installation report must include:
 - Which agent was configured
 - Where tool-first-agent was installed
 - Which tool-memory path is being used
-- Which adapter is being used
 - Whether TOOL_FIRST_MEMORY_HOME was detected
 - Whether .tool-memory-home exists
-- Which file was updated to enable tool-first behavior
+- Which agent config file was updated (SOUL.md / CLAUDE.md / AGENTS.md)
 ````
 
 ### Project Structure
@@ -305,34 +357,26 @@ tool-first-agent/
 ├── SKILL.md                            # sole execution rule source
 ├── Cargo.toml                          # workspace root
 ├── memory_config.yaml                  # default config
-├── references/
-│   ├── memory-home-resolution.md       # TOOL_FIRST_MEMORY_HOME resolution rules
-│   ├── memory-migration-guide.md       # migrating from old paths
-│   ├── agent-integration.md            # multi-agent integration guide
-│   ├── mcp-integration.md              # MCP server integration
-│   └── rust-runtime-design.md          # Rust runtime architecture
+├── references/                         # integration & architecture docs
 ├── registry/
 │   └── tools.yaml                      # candidate tool definitions (10 categories, ~40 tools)
-├── crates/tool-first/
-│   ├── Cargo.toml
-│   └── src/
-│       ├── main.rs                     # CLI entry point
-│       ├── config.rs                   # config loading + resolution
-│       ├── resolver.rs                 # memory home resolution + markers
-│       ├── registry.rs                 # registry query
-│       ├── detect.rs                   # tool detection (which, known paths)
-│       ├── memory.rs                   # MemoryRecord + MemoryAdapter trait
-│       ├── adapters/file.rs            # file adapter (one-record-per-file, atomic writes)
-│       ├── adapters/sqlite.rs          # sqlite adapter (bundled SQLite)
-│       └── mcp.rs                      # MCP stdio server (JSON-RPC 2.0)
-└── dist/
+└── crates/tool-first/
+    └── src/
+        ├── main.rs                     # CLI entry point
+        ├── config.rs                   # config loading + resolution
+        ├── resolver.rs                 # TOOL_FIRST_MEMORY_HOME + markers
+        ├── registry.rs                 # registry query
+        ├── detect.rs                   # tool detection
+        ├── memory.rs                   # MemoryRecord struct
+        ├── file_store.rs               # file-based store (append-only, atomic writes)
+        └── mcp.rs                      # MCP stdio server (JSON-RPC 2.0)
 ```
 
 ### Requirements
 
-- Rust 1.75+
-- macOS (x86_64 / ARM64), Linux
-- No external runtime dependencies (SQLite was removed; file-only storage)
+- macOS (Intel / Apple Silicon) or Linux
+- No Rust installation required for users (pre-built binaries available)
+- Rust 1.75+ only needed for building from source
 
 ### License
 
@@ -382,28 +426,21 @@ AI 助手经常在 `pandoc`、`jq`、`ffmpeg`、`magick` 等工具一条命令�
 ### 快速开始
 
 ```bash
-git clone https://github.com/licat233/tool-first-agent.git
-cd tool-first-agent
+# 下载预编译二进制（macOS，无需 Rust 环境）
+curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.1.0/tool-first-universal-apple-darwin.tar.gz | tar xz
+mv tool-first-universal /usr/local/bin/tool-first
 
-# 编译
-cargo build --release
-
-# 编译 universal binary（x86_64 + ARM64，仅 macOS）
-rustup target add aarch64-apple-darwin
-cargo build --release --target aarch64-apple-darwin
-lipo -create target/release/tool-first \
-             target/aarch64-apple-darwin/release/tool-first \
-     -output target/release/tool-first
-
-# 运行诊断
-./target/release/tool-first doctor
+# 验证
+tool-first doctor
 
 # 查询注册表
-./target/release/tool-first registry query --category document --json
+tool-first registry query --category document --json
 
 # 检测已安装工具
-./target/release/tool-first tools detect --category document --json
+tool-first tools detect --category document --json
 ```
+
+> Linux 用户：需要从源码编译 `cargo build --release`（需要 Rust 1.75+）。
 
 ### CLI 命令
 
@@ -454,8 +491,9 @@ Obsidian 用户应将 `TOOL_FIRST_MEMORY_HOME` 指向 vault 内的低权威 runt
 
 ### 环境要求
 
-- Rust 1.75+
-- 无外部运行时依赖（SQLite 通过 `rusqlite/bundled` 内置）
+- macOS（Intel / Apple Silicon）或 Linux
+- 用户无需安装 Rust（可直接下载预编译二进制）
+- 仅从源码编译时需要 Rust 1.75+
 
 ### 许可证
 
