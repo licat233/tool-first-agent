@@ -1,0 +1,21 @@
+# tool-first-agent memory configuration
+#
+# tool-memory is shared runtime infrastructure.
+# It is not authoritative Vault memory.
+#
+# Path resolution priority:
+#   1. TOOL_FIRST_MEMORY_HOME env var (highest)
+#   2. memory_home key below
+#   3. Default: ~/.config/tool-first-agent/tool-memory
+
+memory_home: "~/.config/tool-first-agent/tool-memory"
+canonical: true
+authority: "runtime-infrastructure"
+
+write_policy:
+  allow_create_new_home: false
+  append_only: true
+  atomic_write: true
+
+file:
+  base_dir: "~/.config/tool-first-agent/tool-memory"

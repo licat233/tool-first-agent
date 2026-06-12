@@ -1,0 +1,5 @@
+target/
+*.pyc
+__pycache__/
+.DS_Store
+memory_config.yaml.local
