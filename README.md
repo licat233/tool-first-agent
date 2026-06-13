@@ -22,6 +22,10 @@
 
 ## English
 
+### Workflow & Architecture
+
+![tool-first-agent workflow and architecture](assets/tool-first-agent-flow.svg)
+
 ### Architecture
 
 ```text
