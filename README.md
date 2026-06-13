@@ -210,143 +210,299 @@ macOS GUI apps may not inherit shell env vars. Use `launchctl setenv`:
 launchctl setenv TOOL_FIRST_MEMORY_HOME "/path/to/tool-memory"
 ```
 
-### Install with an Agent
+### Agent Installation Tutorial
 
-You can paste this prompt into any supported AI agent to install and configure `tool-first-agent`:
+Paste the following tutorial into Codex, Hermes Agent, or Claude Code. It tells
+the agent how to install `tool-first-agent`, configure itself, and verify that
+the tool-first gate is actually being used.
 
 ````text
-You are installing `tool-first-agent` for this local agent environment.
+You are installing and configuring `tool-first-agent` for this local AI agent.
 
 Repository:
 https://github.com/licat233/tool-first-agent
 
+Current release:
+v0.2.0
+
 Supported agents:
 - Codex
 - Claude Code
-- Hermes
+- Hermes Agent
 
-Goal:
-Install and configure `tool-first-agent` so this agent follows a tool-first workflow before writing custom scripts.
+Primary goal:
+Make this agent follow the tool-first principle. Before writing custom scripts,
+installing tools, or handling files/data with ad-hoc code, the agent must first
+ask `tool-first` whether an existing local tool or remembered recipe solves the
+task.
 
-Important architecture rule:
-`tool-memory` is shared runtime infrastructure.
+Required first gate:
 
-It is not authoritative Vault memory.
-It is not current truth.
-It is not a replacement for AI memory governance.
+  tool-first advise --task "<describe the task>" --json
 
-Rule-source principle:
-SKILL.md is the canonical execution rule source.
-The Rust runtime core provides CLI and MCP access.
-Do not create or duplicate full tool-first rules under 02-Rules/Tool-Inventory or any other Vault rule directory.
+If the decision is `use_existing_tool`, use the recommended tool before writing
+custom code.
 
-## Step 1: Download binary
+If the decision is `verify_recalled_recipe`, re-detect the tool and reuse the
+remembered command if still valid.
 
-Download the pre-built binary from GitHub Releases (no Rust required):
+If `advise` is unavailable or ambiguous, fall back to:
 
-macOS (universal, Intel + Apple Silicon):
+  category -> registry query -> detect -> recall
+
+Write custom code only when tools are missing, fail, or the task requires custom
+logic. If writing code, state why: "No existing tool fits because ..."
+
+Architecture rules:
+- `SKILL.md` is the canonical execution rule source.
+- `tool-memory` is shared runtime infrastructure.
+- `tool-memory` is not current truth, not authoritative Vault memory, and not a
+  replacement for AI memory governance.
+- Do not create private tool-memory when `TOOL_FIRST_MEMORY_HOME` exists.
+- Do not copy the full rules into high-authority Vault paths such as
+  `01-Facts/`, `02-Rules/`, `03-Insights/`, or `05-Truth/`.
+- Do not write guessed or hallucinated records into tool-memory.
+
+## Step 1: Install the `tool-first` binary
+
+Detect the platform:
+
+  uname -s
+  uname -m
+
+For macOS, prefer the universal binary unless the user explicitly wants a
+single-architecture binary:
+
   curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.0/tool-first-universal-apple-darwin.tar.gz | tar xz
-  mv tool-first-universal /usr/local/bin/tool-first
+  chmod +x tool-first-universal
 
-macOS (Apple Silicon only):
+Install it as `tool-first`.
+
+Preferred install path:
+
+  /usr/local/bin/tool-first
+
+If `/usr/local/bin` requires approval or is not writable, ask the user before
+using elevated permissions. If the user does not want a system install, install
+to:
+
+  ~/.local/bin/tool-first
+
+and make sure `~/.local/bin` is on PATH.
+
+Commands:
+
+  mv tool-first-universal tool-first
+  mkdir -p ~/.local/bin
+  mv tool-first ~/.local/bin/tool-first
+  tool-first --version
+
+Optional single-architecture downloads:
+
+Apple Silicon only:
+
   curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.0/tool-first-aarch64-apple-darwin.tar.gz | tar xz
-  mv tool-first-aarch64 /usr/local/bin/tool-first
 
-macOS (Intel only):
+Intel only:
+
   curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.0/tool-first-x86_64-apple-darwin.tar.gz | tar xz
-  mv tool-first-x86_64 /usr/local/bin/tool-first
 
-If no pre-built binary is available for your platform, build from source:
+If no prebuilt binary matches the platform, build from source:
+
   git clone https://github.com/licat233/tool-first-agent.git
   cd tool-first-agent
   cargo build --release
-  cp target/release/tool-first /usr/local/bin/
+  cp target/release/tool-first ~/.local/bin/tool-first
 
-## Step 2: Install skill files
+## Step 2: Install the skill files
 
-Clone the repo to the agent's skill directory:
+Install the repository into the current agent's skill directory.
 
-  git clone https://github.com/licat233/tool-first-agent.git /path/to/agent/skill/dir/tool-first-agent
+Codex:
 
-Or download and extract the source archive.
+  mkdir -p ~/.codex/skills
+  git clone https://github.com/licat233/tool-first-agent.git ~/.codex/skills/tool-first-agent
 
-## Step 3: Configure the Tool-First Rule
+Claude Code:
 
-THIS STEP IS REQUIRED. Without it, the agent will not auto-trigger tool-first behavior.
+  mkdir -p ~/.claude/skills
+  git clone https://github.com/licat233/tool-first-agent.git ~/.claude/skills/tool-first-agent
 
-For Hermes Agent — add to ~/.hermes/SOUL.md:
+Hermes Agent:
 
-  ## Tool-First Rule (G4)
-  Before writing custom scripts, installing tools, or handling files/data, always check whether an existing local tool already solves the problem.
-  1. Run the one-step gate first: tool-first advise --task "<description>"
-  2. If it recommends use_existing_tool, use that tool before writing custom code.
-  3. If it recommends verify_recalled_recipe, re-detect the tool and reuse the remembered command if still valid.
-  4. If advise is unavailable, fall back to category → registry query → detect → recall.
-  5. Write code only when tools are missing, fail, or the task requires custom logic.
-  If writing code, briefly state why: "No existing tool fits because …"
-  tool-memory is shared runtime infrastructure, not authoritative Vault memory.
-  SKILL.md is the sole execution rule source.
+  mkdir -p ~/.hermes/skills/devops
+  git clone https://github.com/licat233/tool-first-agent.git ~/.hermes/skills/devops/tool-first-agent
 
-For Claude Code — add to ~/.claude/CLAUDE.md:
+If the directory already exists, update it instead of cloning again:
+
+  git -C <skill-directory>/tool-first-agent pull
+
+## Step 3: Configure shared tool-memory
+
+First check whether the user already has a canonical memory home:
+
+  echo "$TOOL_FIRST_MEMORY_HOME"
+  tool-first memory resolve --json
+
+If `TOOL_FIRST_MEMORY_HOME` is already set, use it. Do not create another
+private memory home.
+
+If it is not set, ask the user where shared tool-memory should live. Recommend a
+low-authority runtime path, for example:
+
+  ~/AI-Runtime/tool-first-agent/tool-memory
+  <Vault>/92-Logs/_shared/tool-memory
+  <Vault>/08-Working-Memory/_runtime/tool-memory
+
+After the user confirms the path, set it for shells:
+
+  export TOOL_FIRST_MEMORY_HOME="<confirmed-path>"
+
+For macOS GUI apps, also set launchd environment variables:
+
+  launchctl setenv TOOL_FIRST_MEMORY_HOME "<confirmed-path>"
+
+Set the agent name:
+
+Codex:
+
+  export TOOL_FIRST_AGENT_NAME="codex"
+  launchctl setenv TOOL_FIRST_AGENT_NAME "codex"
+
+Claude Code:
+
+  export TOOL_FIRST_AGENT_NAME="claude-code"
+  launchctl setenv TOOL_FIRST_AGENT_NAME "claude-code"
+
+Hermes:
+
+  export TOOL_FIRST_AGENT_NAME="hermes"
+  launchctl setenv TOOL_FIRST_AGENT_NAME "hermes"
+
+Initialize the memory home only after the path is confirmed:
+
+  tool-first memory init --json
+  tool-first doctor
+  tool-first memory check-conflicts --json
+
+## Step 4: Add the agent rule
+
+This step is required. Without an agent rule, the binary can be installed but
+the agent may still skip the tool-first gate.
+
+Use this rule text:
 
   ## Tool-First Rule
-  Before writing custom scripts, installing new software, or handling files/data with ad-hoc code, check if an existing local tool already solves the problem.
-  1. Run the one-step gate first: tool-first advise --task "<description>" --json
-  2. If it recommends use_existing_tool, use that tool before writing custom code.
-  3. If it recommends verify_recalled_recipe, re-detect the tool and reuse the remembered command if still valid.
-  4. If advise is unavailable, fall back to category → registry query → detect → recall.
-  5. Write code only when tools are missing, fail, or the task requires custom logic.
-  If writing code, briefly state why: "No existing tool fits because …"
-  tool-memory is shared runtime infrastructure, not authoritative Vault memory.
+
+  Before writing custom scripts, installing tools, or handling files/data with
+  ad-hoc code, always check whether an existing local tool already solves the
+  problem.
+
+  1. Run the one-step gate first:
+     tool-first advise --task "<description>" --json
+  2. If the decision is use_existing_tool, use the recommended tool before
+     writing custom code.
+  3. If the decision is verify_recalled_recipe, re-detect the tool and reuse the
+     remembered command if still valid.
+  4. If advise is unavailable or ambiguous, fall back to category -> registry
+     query -> detect -> recall.
+  5. Write code only when tools are missing, fail, or the task requires custom
+     logic.
+
+  If writing code, briefly state why: "No existing tool fits because ..."
+
+  tool-memory is shared runtime infrastructure, not authoritative memory.
+  Do not create private tool-memory when TOOL_FIRST_MEMORY_HOME exists.
+  Do not write guessed tool-memory records.
   SKILL.md is the sole execution rule source.
 
-For Codex — add to ~/.codex/AGENTS.md:
+Add the rule to the correct file:
 
-  Same rule text as Claude Code above.
+Codex:
 
-## Step 4: Verify
+  ~/.codex/AGENTS.md
 
-Run `tool-first doctor` to verify the setup.
-Run `tool-first memory resolve --json` to check memory home resolution. If the resolved directory is intentional and missing, run `tool-first memory init --json` before writes or MCP startup.
+Claude Code:
 
-Before writing custom code for file conversion, document processing, PDF handling,
-image/media processing, archive operations, data transformation, search, web
-extraction, or development utility tasks, first check whether an existing local
-tool or verified recipe can solve the task.
+  ~/.claude/CLAUDE.md
 
-If `TOOL_FIRST_MEMORY_HOME` is set:
-1. Treat it as the canonical shared runtime tool-memory home.
-2. Do not create a private tool-memory directory elsewhere.
-3. If the directory does not exist, initialize it after confirming intent.
+Hermes Agent:
 
-If `TOOL_FIRST_MEMORY_HOME` is not set:
-1. Check `~/.config/tool-first-agent/config.yaml` for `memory_home`.
-2. If not configured, ask the user where shared tool-memory should be stored.
-3. Recommend a low-authority runtime/log path.
+  ~/.hermes/SOUL.md
 
-Recommended locations:
-- ~/AI-Runtime/tool-first-agent/tool-memory
-- <ARMORVault>/92-Logs/_shared/tool-memory
-- <PAMAVault>/08-Working-Memory/_runtime/tool-memory
+## Step 5: Configure MCP when supported
 
-Do not place tool-memory in high-authority paths such as 01-Facts, 02-Rules, 03-Insights, 05-Truth.
+MCP is recommended for Hermes and optional for Claude Code or Codex surfaces
+that can launch local MCP servers.
 
-Expected workflow:
-1. Run `tool-first advise --task "<description>"` as the first gate.
-2. Prefer the recommended existing tool or verified recipe.
-3. Fall back to manual registry query, detection, and recall only if advice is unavailable or ambiguous.
-4. Write custom code only if tools and recipes are unsuitable.
-5. Record verified success, failure, or unsafe pattern into shared tool-memory.
+Hermes example:
 
-Do not write hallucinated or guessed tool-memory records.
+  mcp_servers:
+    tfa:
+      command: "/absolute/path/to/tool-first"
+      args: ["mcp", "serve"]
+      env:
+        TOOL_FIRST_MEMORY_HOME: "<confirmed-path>"
+        TOOL_FIRST_AGENT_NAME: "hermes"
+      timeout: 120
+      connect_timeout: 60
+      tools:
+        include:
+          - advise_tool_use
+          - resolve_memory_home
+          - query_registry
+          - detect_candidates
+          - recall_memory
+          - record_memory
+          - check_conflicts
+          - doctor
+        resources: false
+        prompts: false
 
-Final installation report must include:
-- Which agent was configured
-- Where tool-first-agent was installed
-- Which tool-memory path is being used
-- Whether TOOL_FIRST_MEMORY_HOME was detected
-- Whether .tool-memory-home exists
-- Which agent config file was updated (SOUL.md / CLAUDE.md / AGENTS.md)
+When MCP is available, prefer the MCP tool:
+
+  advise_tool_use
+
+Hermes may expose it as:
+
+  mcp_tfa_advise_tool_use
+
+## Step 6: Verify behavior
+
+Run:
+
+  tool-first --version
+  tool-first doctor
+  tool-first advise --task "extract fields from a json file" --json
+  tool-first advise --task "resize a png image to 800px" --json
+
+Expected behavior:
+- JSON tasks should recommend tools such as `jq` or `yq` when available.
+- Image resize tasks should recommend tools such as `magick` or `sips` when
+  available.
+- The agent should not write a custom script when `advise` recommends
+  `use_existing_tool`.
+
+Optional persistence check:
+
+  tool-first tools detect --category data --record --json
+  tool-first memory recall --task "json" --json
+
+## Step 7: Final report
+
+Report back with:
+
+- Agent configured: Codex / Claude Code / Hermes Agent
+- Binary path: output of `command -v tool-first`
+- Binary version: output of `tool-first --version`
+- Skill directory used
+- Agent rule file updated
+- TOOL_FIRST_MEMORY_HOME value
+- Whether `.tool-memory-home` exists
+- Whether `tool-first doctor` passed
+- Whether `tool-first advise` returned a useful recommendation
+- Whether MCP was configured, and the exposed tool name if applicable
+- Any conflicts from `tool-first memory check-conflicts --json`
 ````
 
 ### Project Structure
