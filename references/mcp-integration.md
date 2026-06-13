@@ -36,7 +36,7 @@ mcp_servers:
     args: ["mcp", "serve"]
     env:
       TOOL_FIRST_MEMORY_HOME: "/path/to/tool-memory"
-      TOOL_FIRST_AGENT_NAME: "hermes-mcp"
+      TOOL_FIRST_AGENT_NAME: "hermes"
     timeout: 120
     connect_timeout: 60
     tools:
@@ -61,8 +61,51 @@ mcp_tool_first_<tool_name>
 
 ## Claude Code Integration
 
-Claude Code can launch the MCP server via a settings.json configuration.
-See `references/agent-integration.md` for details.
+Claude Code supports MCP natively. Add the server at user scope so it is
+available across all projects:
+
+```bash
+claude mcp add tool-first \
+  --scope user \
+  -e TOOL_FIRST_MEMORY_HOME="/path/to/tool-memory" \
+  -e TOOL_FIRST_AGENT_NAME="claude-code" \
+  -- /path/to/tool-first mcp serve
+```
+
+Verify:
+
+```bash
+claude mcp get tool-first
+```
+
+Remove:
+
+```bash
+claude mcp remove tool-first -s user
+```
+
+## Codex Integration
+
+Codex also supports MCP natively:
+
+```bash
+codex mcp add tool-first \
+  --env TOOL_FIRST_MEMORY_HOME="/path/to/tool-memory" \
+  --env TOOL_FIRST_AGENT_NAME="codex" \
+  -- /path/to/tool-first mcp serve
+```
+
+Verify:
+
+```bash
+codex mcp get tool-first
+```
+
+Remove:
+
+```bash
+codex mcp remove tool-first
+```
 
 ## Environment Variables
 

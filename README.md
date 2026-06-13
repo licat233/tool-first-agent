@@ -441,10 +441,13 @@ Hermes Agent:
 
 ## Step 5: Configure MCP when supported
 
-MCP is recommended for Hermes and optional for Claude Code or Codex surfaces
-that can launch local MCP servers.
+MCP is the recommended integration for all three agents. It lets each agent
+declare its own `TOOL_FIRST_AGENT_NAME` in the MCP server environment, so
+tool-memory records are correctly attributed to the agent that wrote them.
 
-Hermes example:
+Hermes:
+
+Add to `~/.hermes/config.yaml` under `mcp_servers`:
 
   mcp_servers:
     tool_first:
@@ -468,9 +471,23 @@ Hermes example:
         resources: false
         prompts: false
 
-When MCP is available, prefer the MCP tool:
+Claude Code:
 
-  advise_tool_use
+  claude mcp add tool-first \
+    --scope user \
+    -e TOOL_FIRST_MEMORY_HOME="<confirmed-path>" \
+    -e TOOL_FIRST_AGENT_NAME="claude-code" \
+    -- /absolute/path/to/tool-first mcp serve
+
+Codex:
+
+  codex mcp add tool-first \
+    --env TOOL_FIRST_MEMORY_HOME="<confirmed-path>" \
+    --env TOOL_FIRST_AGENT_NAME="codex" \
+    -- /absolute/path/to/tool-first mcp serve
+
+When MCP is available, prefer the MCP tool `advise_tool_use` over the CLI
+fallback `tool-first advise`.
 
 Hermes may expose it as:
 
