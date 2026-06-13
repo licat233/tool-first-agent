@@ -13,14 +13,15 @@ Before writing custom scripts, installing tools, or handling files/data,
 
 1. **Load the `tool-first-agent` skill** — it provides a registry of candidate
    tools, lazy category-based detection, and shared runtime tool-memory.
-2. **Classify the task** into a category: `document`, `pdf`, `image`, `media`,
-   `data`, `search`, `archive`, `dev`, `web`, `ai`.
-3. **Resolve the shared tool-memory home** — check `TOOL_FIRST_MEMORY_HOME`.
-4. **Query the registry** for candidate tools in that category.
-5. **Detect only those candidates** — do not perform blind filesystem scans.
-6. **Recall past experience** from the memory backend for what worked before.
-7. **Use an existing tool** when 1–3 commands can solve the task.
-8. **Write code only when** tools are missing, fail, or the task requires
+2. **Run the one-step gate first**:
+   `tool-first advise --task "<description>" --json`
+3. If the decision is `use_existing_tool`, use the recommended tool before
+   writing custom code.
+4. If the decision is `verify_recalled_recipe`, re-detect the tool and reuse the
+   remembered command if still valid.
+5. If `advise` is unavailable or ambiguous, fall back to category -> registry
+   query -> detect -> recall.
+6. **Write code only when** tools are missing, fail, or the task requires
    custom logic.
 
 If writing code, briefly state why: "No existing tool fits because …"

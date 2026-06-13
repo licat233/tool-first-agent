@@ -11,17 +11,15 @@ before writing custom code.
 Before writing custom scripts, installing new software, or handling files/data
 with ad-hoc code, check if an existing local tool already solves the problem.
 
-1. **Classify the task** into a category: `document`, `pdf`, `image`, `media`,
-   `data`, `search`, `archive`, `dev`, `web`, `ai`.
-2. **Resolve the shared tool-memory home** — check `TOOL_FIRST_MEMORY_HOME` env var.
-3. **Query the registry** for candidate tools:
-   `tool-first registry query --category <cat> --json`
-4. **Detect only those candidates** — do not perform blind filesystem scans:
-   `tool-first tools detect --category <cat> --json`
-5. **Recall past experience** from tool-memory:
-   `tool-first memory recall --task "<description>" --json`
-6. **Use an existing tool** when 1–3 commands can solve the task.
-7. **Write code only when** tools are missing, fail, or the task requires custom logic.
+1. **Run the one-step gate first**:
+   `tool-first advise --task "<description>" --json`
+2. If the decision is `use_existing_tool`, use the recommended tool before
+   writing custom code.
+3. If the decision is `verify_recalled_recipe`, re-detect the tool and reuse the
+   remembered command if still valid.
+4. If `advise` is unavailable or ambiguous, fall back to category -> registry
+   query -> detect -> recall.
+5. **Write code only when** tools are missing, fail, or the task requires custom logic.
 
 If writing code, briefly state why: "No existing tool fits because …"
 
