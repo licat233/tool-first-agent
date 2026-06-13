@@ -1,3 +1,4 @@
+use crate::memory::MemoryRecord;
 use crate::registry::{Registry, ToolSpec};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
@@ -16,7 +17,7 @@ const KNOWN_DIRS: &[&str] = &[
 ];
 
 /// Result of detecting a single tool.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct DetectionResult {
     pub namespace: String,
     pub memory_type: String,
@@ -31,6 +32,50 @@ pub struct DetectionResult {
     pub path_fingerprint: String,
     pub confidence: f64,
     pub tags: Vec<String>,
+}
+
+impl DetectionResult {
+    pub fn to_memory_record(&self) -> MemoryRecord {
+        let mut record = MemoryRecord {
+            namespace: Some(self.namespace.clone()),
+            memory_type: Some(self.memory_type.clone()),
+            record_type: Some(self.record_type.clone()),
+            category: Some(self.category.clone()),
+            tool: Some(self.tool.clone()),
+            status: Some(self.status.clone()),
+            verified_at: Some(self.checked_at.clone()),
+            confidence: Some(self.confidence),
+            tags: Some({
+                let mut tags = self.tags.clone();
+                let category_tag = format!("tool-category-{}", self.category);
+                if !tags.contains(&category_tag) {
+                    tags.push(category_tag);
+                }
+                tags
+            }),
+            path: if self.path.is_empty() {
+                None
+            } else {
+                Some(self.path.clone())
+            },
+            version: if self.version.is_empty() {
+                None
+            } else {
+                Some(self.version.clone())
+            },
+            ..Default::default()
+        };
+        record.extra.insert(
+            "detection_method".to_string(),
+            serde_json::Value::String(self.detection_method.clone()),
+        );
+        record.extra.insert(
+            "path_fingerprint".to_string(),
+            serde_json::Value::String(self.path_fingerprint.clone()),
+        );
+        record.enrich();
+        record
+    }
 }
 
 /// Detect all candidate tools in a category or a specific list of tool names.
@@ -207,4 +252,41 @@ fn shellexpand(s: &str) -> String {
         }
     }
     s.to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn detection_result_converts_to_memory_record() {
+        let detection = DetectionResult {
+            namespace: "agent_tool_inventory".to_string(),
+            memory_type: "tool_inventory".to_string(),
+            record_type: "availability".to_string(),
+            category: "data".to_string(),
+            tool: "jq".to_string(),
+            status: "available".to_string(),
+            path: "/usr/bin/jq".to_string(),
+            version: "jq-1.7".to_string(),
+            detection_method: "which".to_string(),
+            checked_at: "2026-06-13T00:00:00Z".to_string(),
+            path_fingerprint: "abc123".to_string(),
+            confidence: 0.98,
+            tags: vec!["tool-inventory".to_string()],
+        };
+
+        let record = detection.to_memory_record();
+        assert_eq!(record.record_type.as_deref(), Some("availability"));
+        assert_eq!(record.tool.as_deref(), Some("jq"));
+        assert_eq!(record.path.as_deref(), Some("/usr/bin/jq"));
+        assert!(record
+            .tags
+            .unwrap()
+            .contains(&"tool-category-data".to_string()));
+        assert_eq!(
+            record.extra["detection_method"],
+            serde_json::Value::String("which".to_string())
+        );
+    }
 }

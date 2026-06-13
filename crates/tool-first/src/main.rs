@@ -1,3 +1,4 @@
+mod advice;
 mod config;
 mod detect;
 mod file_store;
@@ -31,6 +32,17 @@ enum Commands {
     Registry {
         #[command(subcommand)]
         action: RegistryCommands,
+    },
+    /// Recommend existing tools before writing custom code.
+    Advise {
+        #[arg(long)]
+        task: String,
+        #[arg(long)]
+        category: Option<String>,
+        #[arg(long, default_value = "5")]
+        limit: usize,
+        #[arg(long)]
+        json: bool,
     },
     /// Detect installed tools.
     Tools {
@@ -75,6 +87,11 @@ enum MemoryCommands {
         #[arg(long)]
         json: bool,
     },
+    /// Initialize the canonical memory home after explicit user intent.
+    Init {
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 #[derive(Subcommand)]
@@ -98,6 +115,9 @@ enum ToolsCommands {
         category: Option<String>,
         #[arg(long)]
         tool: Vec<String>,
+        /// Persist detection results as availability records.
+        #[arg(long)]
+        record: bool,
         #[arg(long)]
         json: bool,
     },
@@ -123,7 +143,14 @@ fn main() {
             } => cmd_memory_recall(task.as_deref(), category.as_deref(), limit, json),
             MemoryCommands::Record { record_json, json } => cmd_memory_record(&record_json, json),
             MemoryCommands::CheckConflicts { json } => cmd_memory_check_conflicts(json),
+            MemoryCommands::Init { json } => cmd_memory_init(json),
         },
+        Commands::Advise {
+            task,
+            category,
+            limit,
+            json,
+        } => cmd_advise(&task, category.as_deref(), limit, json),
         Commands::Registry { action } => match action {
             RegistryCommands::Query {
                 category,
@@ -135,8 +162,9 @@ fn main() {
             ToolsCommands::Detect {
                 category,
                 tool,
+                record,
                 json,
-            } => cmd_tools_detect(category.as_deref(), &tool, json),
+            } => cmd_tools_detect(category.as_deref(), &tool, record, json),
         },
         Commands::Doctor => cmd_doctor(),
         Commands::Mcp { action } => match action {
@@ -154,6 +182,35 @@ fn main() {
 }
 
 // ── CLI commands ────────────────────────────────────────────────────────
+
+fn cmd_advise(
+    task: &str,
+    category: Option<&str>,
+    limit: usize,
+    json_output: bool,
+) -> Result<(), String> {
+    let cfg = config::load();
+    let memory_home = resolver::resolve_memory_home(&cfg);
+    let reg = registry::load_registry()?;
+    let advice = advice::advise(&reg, &memory_home, task, category, limit);
+
+    if json_output {
+        println!("{}", serde_json::to_string_pretty(&advice).unwrap());
+    } else {
+        let rec = &advice.recommendation;
+        println!("decision: {}", rec.decision);
+        println!("tool:     {}", rec.tool.as_deref().unwrap_or("-"));
+        println!("category: {}", rec.category.as_deref().unwrap_or("-"));
+        println!("reason:   {}", rec.reason);
+        if !rec.command_templates.is_empty() {
+            println!("commands:");
+            for (name, command) in &rec.command_templates {
+                println!("  {name}: {command}");
+            }
+        }
+    }
+    Ok(())
+}
 
 fn cmd_memory_resolve(json_output: bool) -> Result<(), String> {
     let cfg = config::load();
@@ -189,8 +246,6 @@ fn cmd_memory_recall(
     let query = task.ok_or("--task is required for recall")?;
     let cfg = config::load();
     let memory_home = resolver::resolve_memory_home(&cfg);
-    file_store::ensure_ready(&memory_home)?;
-
     let results = file_store::recall(&memory_home, query, category, limit);
 
     if json_output {
@@ -238,7 +293,7 @@ fn cmd_memory_record(record_json: &str, json_output: bool) -> Result<(), String>
 
     let cfg = config::load();
     let memory_home = resolver::resolve_memory_home(&cfg);
-    file_store::ensure_ready(&memory_home)?;
+    file_store::ensure_ready(&memory_home, config::allow_create_new_home(&cfg))?;
 
     let result = file_store::retain(&memory_home, &record)?;
 
@@ -299,6 +354,27 @@ fn cmd_memory_check_conflicts(json_output: bool) -> Result<(), String> {
     Ok(())
 }
 
+fn cmd_memory_init(json_output: bool) -> Result<(), String> {
+    let cfg = config::load();
+    let memory_home = resolver::resolve_memory_home(&cfg);
+    file_store::ensure_ready(&memory_home, true)?;
+
+    if json_output {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&serde_json::json!({
+                "memory_home": memory_home.to_string_lossy(),
+                "initialized": true,
+                "has_marker": resolver::has_marker(&memory_home),
+            }))
+            .unwrap()
+        );
+    } else {
+        println!("Initialized: {}", memory_home.display());
+    }
+    Ok(())
+}
+
 fn cmd_registry_query(
     category: Option<&str>,
     task: Option<&str>,
@@ -337,6 +413,7 @@ fn cmd_registry_query(
 fn cmd_tools_detect(
     category: Option<&str>,
     tools: &[String],
+    record: bool,
     json_output: bool,
 ) -> Result<(), String> {
     if category.is_none() && tools.is_empty() {
@@ -345,9 +422,28 @@ fn cmd_tools_detect(
 
     let reg = registry::load_registry()?;
     let results = detect::detect(&reg, category, tools);
+    let mut saved = Vec::new();
+
+    if record {
+        let cfg = config::load();
+        let memory_home = resolver::resolve_memory_home(&cfg);
+        file_store::ensure_ready(&memory_home, config::allow_create_new_home(&cfg))?;
+        for item in &results {
+            let memory_record = item.to_memory_record();
+            let result = file_store::retain(&memory_home, &memory_record)?;
+            saved.push(result.saved);
+        }
+    }
 
     if json_output {
-        println!("{}", serde_json::to_string_pretty(&results).unwrap());
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&serde_json::json!({
+                "results": results,
+                "saved": saved,
+            }))
+            .unwrap()
+        );
     } else {
         for item in &results {
             let loc = if item.path.is_empty() {
@@ -372,11 +468,11 @@ fn cmd_tools_detect(
 fn cmd_doctor() -> Result<(), String> {
     let cfg = config::load();
     let memory_home = resolver::resolve_memory_home(&cfg);
-    let has_marker = resolver::has_marker(&memory_home);
     let conflicts = resolver::detect_memory_homes();
     let conflict_count = conflicts.iter().filter(|c| c.path.exists()).count();
 
-    let ready = file_store::ensure_ready(&memory_home).is_ok();
+    let ready = file_store::ensure_ready(&memory_home, config::allow_create_new_home(&cfg)).is_ok();
+    let has_marker = resolver::has_marker(&memory_home);
     let backend_info = file_store::backend_info(&memory_home);
 
     let reg = registry::load_registry().unwrap_or_default();

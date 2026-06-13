@@ -56,14 +56,15 @@ tool-first-agent/
 Before writing custom code:
 
 1. **Check relevant skills first** — skills encode specialized knowledge, API endpoints, and proven workflows that outperform general-purpose approaches. On Hermes, use `skills_list` and `skill_view`. On Claude Code, skills are listed in the system-reminder's "available skills" section — invoke via the `Skill` tool. Do not perform blind filesystem scans before checking skills.
-2. Classify the task category.
-3. **Resolve the shared tool-memory home** — check `TOOL_FIRST_MEMORY_HOME` env var.
-4. Query the registry for candidate tools.
-5. Detect only those candidate tools.
-6. Recall past experience from tool-memory.
-7. Use an existing tool when 1-3 commands can solve the task.
-8. Write code only when tools are missing, fail, or the task requires custom logic.
-9. Record verified success, failure, or unsafe pattern into shared tool-memory.
+2. Run `tool-first advise --task "<description>" --json` as the one-step gate when the CLI is available.
+3. If `advise` is unavailable, classify the task category manually.
+4. **Resolve the shared tool-memory home** — check `TOOL_FIRST_MEMORY_HOME` env var.
+5. Query the registry for candidate tools.
+6. Detect only those candidate tools.
+7. Recall past experience from tool-memory.
+8. Use an existing tool when 1-3 commands can solve the task.
+9. Write code only when tools are missing, fail, or the task requires custom logic.
+10. Record verified success, failure, or unsafe pattern into shared tool-memory.
 
 Do not perform blind filesystem scans. Do not run `find /`, `find ~`, or scan every
 executable on the machine.
@@ -138,7 +139,11 @@ Build: `cargo build --release`
 
 ```bash
 # Resolve the canonical memory home
+tool-first advise --task "<describe the task>" --json
 tool-first memory resolve --json
+
+# Initialize the resolved memory home only after explicit intent
+tool-first memory init --json
 
 # Query the registry for candidate tools
 tool-first registry query --category document --json
@@ -146,6 +151,9 @@ tool-first registry query --task "extract docx text" --json
 
 # Detect which candidate tools are installed
 tool-first tools detect --category document --json
+
+# Persist availability records when detection should be retained
+tool-first tools detect --category document --record --json
 
 # Recall past experience from tool-memory
 tool-first memory recall --task "extract docx text" --json
@@ -167,6 +175,7 @@ tool-first mcp serve
 
 | MCP Tool | Description |
 |----------|-------------|
+| `advise_tool_use` | Recommend existing local tools before writing custom code |
 | `resolve_memory_home` | Resolve the canonical tool-memory home |
 | `query_registry` | Find candidate tools by category/task |
 | `detect_candidates` | Detect which tools are installed |

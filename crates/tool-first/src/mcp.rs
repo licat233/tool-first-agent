@@ -11,7 +11,7 @@ use crate::resolver;
 pub fn run_stdio_server() -> Result<(), String> {
     let cfg = crate::config::load();
     let memory_home = resolver::resolve_memory_home(&cfg);
-    crate::file_store::ensure_ready(&memory_home)?;
+    crate::file_store::ensure_ready(&memory_home, crate::config::allow_create_new_home(&cfg))?;
     let reg = registry::load_registry().unwrap_or_default();
 
     let stdin = io::stdin();
@@ -31,7 +31,9 @@ pub fn run_stdio_server() -> Result<(), String> {
             Err(_) => continue,
         };
 
-        let response = handle_request(&request, &memory_home, &reg);
+        let Some(response) = handle_request(&request, &memory_home, &reg) else {
+            continue;
+        };
 
         let resp_json = serde_json::to_string(&response).unwrap_or_default();
         writeln!(stdout, "{resp_json}").ok();
@@ -43,7 +45,8 @@ pub fn run_stdio_server() -> Result<(), String> {
 
 #[derive(Debug, Deserialize)]
 struct JsonRpcRequest {
-    jsonrpc: Option<String>,
+    #[serde(rename = "jsonrpc")]
+    _jsonrpc: Option<String>,
     id: Option<Value>,
     method: String,
     params: Option<Value>,
@@ -69,11 +72,24 @@ fn handle_request(
     req: &JsonRpcRequest,
     memory_home: &std::path::PathBuf,
     reg: &registry::Registry,
-) -> JsonRpcResponse {
+) -> Option<JsonRpcResponse> {
     let result = match req.method.as_str() {
         "tools/list" => {
             serde_json::json!({
                 "tools": [
+                    {
+                        "name": "advise_tool_use",
+                        "description": "Recommend existing local tools before writing custom code.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "task": { "type": "string" },
+                                "category": { "type": "string" },
+                                "limit": { "type": "integer", "default": 5 }
+                            },
+                            "required": ["task"]
+                        }
+                    },
                     {
                         "name": "resolve_memory_home",
                         "description": "Resolve the canonical tool-memory home directory."
@@ -153,19 +169,33 @@ fn handle_request(
                 .unwrap_or(serde_json::json!({}));
 
             match tool_name {
+                "advise_tool_use" => {
+                    let task = args.get("task").and_then(|v| v.as_str()).unwrap_or("");
+                    if task.trim().is_empty() {
+                        mcp_tool_error("task is required".to_string())
+                    } else {
+                        let category = args.get("category").and_then(|v| v.as_str());
+                        let limit =
+                            args.get("limit").and_then(|v| v.as_u64()).unwrap_or(5) as usize;
+                        let advice = crate::advice::advise(reg, memory_home, task, category, limit);
+                        mcp_tool_result(
+                            serde_json::to_value(advice).unwrap_or_else(|_| serde_json::json!({})),
+                        )
+                    }
+                }
                 "resolve_memory_home" => {
                     let has_marker = resolver::has_marker(memory_home);
-                    serde_json::json!({
+                    mcp_tool_result(serde_json::json!({
                         "memory_home": memory_home.to_string_lossy(),
                         "TOOL_FIRST_MEMORY_HOME": std::env::var("TOOL_FIRST_MEMORY_HOME").unwrap_or_else(|_| "(not set)".to_string()),
                         "has_marker": has_marker,
-                    })
+                    }))
                 }
                 "query_registry" => {
                     let category = args.get("category").and_then(|v| v.as_str());
                     let task = args.get("task").and_then(|v| v.as_str());
                     let results = registry::query(reg, category, task);
-                    serde_json::json!({ "results": results })
+                    mcp_tool_result(serde_json::json!({ "results": results }))
                 }
                 "detect_candidates" => {
                     let category = args.get("category").and_then(|v| v.as_str());
@@ -179,17 +209,17 @@ fn handle_request(
                         })
                         .unwrap_or_default();
                     let results = detect::detect(reg, category, &tools);
-                    serde_json::json!({ "results": results })
+                    mcp_tool_result(serde_json::json!({ "results": results }))
                 }
                 "recall_memory" => {
                     let query = args.get("query").and_then(|v| v.as_str()).unwrap_or("");
                     let category = args.get("category").and_then(|v| v.as_str());
                     let limit = args.get("limit").and_then(|v| v.as_u64()).unwrap_or(10) as usize;
                     let results = crate::file_store::recall(memory_home, query, category, limit);
-                    serde_json::json!({
+                    mcp_tool_result(serde_json::json!({
                         "query": query,
                         "results": results,
-                    })
+                    }))
                 }
                 "record_memory" => {
                     let mut record = MemoryRecord {
@@ -224,21 +254,21 @@ fn handle_request(
                     };
                     record.enrich();
                     match crate::file_store::retain(memory_home, &record) {
-                        Ok(result) => serde_json::json!({ "saved": result.saved }),
-                        Err(e) => serde_json::json!({ "error": e }),
+                        Ok(result) => mcp_tool_result(serde_json::json!({ "saved": result.saved })),
+                        Err(e) => mcp_tool_error(e),
                     }
                 }
                 "check_conflicts" => {
                     let candidates = resolver::detect_memory_homes();
                     let conflict = candidates.iter().filter(|c| c.path.exists()).count() > 1;
-                    serde_json::json!({
+                    mcp_tool_result(serde_json::json!({
                         "candidates": candidates,
                         "conflict": conflict,
-                    })
+                    }))
                 }
-                "doctor" => doctor(memory_home, reg),
+                "doctor" => mcp_tool_result(doctor(memory_home, reg)),
                 _ => {
-                    return JsonRpcResponse {
+                    return Some(JsonRpcResponse {
                         jsonrpc: "2.0".to_string(),
                         id: req.id.clone(),
                         result: None,
@@ -246,7 +276,7 @@ fn handle_request(
                             code: -32601,
                             message: format!("Unknown tool: {tool_name}"),
                         }),
-                    };
+                    });
                 }
             }
         }
@@ -259,10 +289,10 @@ fn handle_request(
             })
         }
 
-        "notifications/initialized" => serde_json::json!(null),
+        "notifications/initialized" => return None,
 
         _ => {
-            return JsonRpcResponse {
+            return Some(JsonRpcResponse {
                 jsonrpc: "2.0".to_string(),
                 id: req.id.clone(),
                 result: None,
@@ -270,16 +300,32 @@ fn handle_request(
                     code: -32601,
                     message: format!("Unknown method: {}", req.method),
                 }),
-            };
+            });
         }
     };
 
-    JsonRpcResponse {
+    Some(JsonRpcResponse {
         jsonrpc: "2.0".to_string(),
         id: req.id.clone(),
         result: Some(result),
         error: None,
-    }
+    })
+}
+
+fn mcp_tool_result(value: Value) -> Value {
+    let text = serde_json::to_string_pretty(&value).unwrap_or_else(|_| value.to_string());
+    serde_json::json!({
+        "content": [{ "type": "text", "text": text }],
+        "structuredContent": value,
+        "isError": false,
+    })
+}
+
+fn mcp_tool_error(message: String) -> Value {
+    serde_json::json!({
+        "content": [{ "type": "text", "text": message }],
+        "isError": true,
+    })
 }
 
 fn doctor(memory_home: &std::path::PathBuf, reg: &registry::Registry) -> Value {
@@ -300,4 +346,54 @@ fn doctor(memory_home: &std::path::PathBuf, reg: &registry::Registry) -> Value {
             "candidates": conflicts,
         },
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    fn temp_memory_home(name: &str) -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "tool-first-mcp-test-{name}-{}",
+            uuid::Uuid::new_v4()
+        ))
+    }
+
+    #[test]
+    fn tools_call_returns_mcp_content_and_structured_content() {
+        let memory_home = temp_memory_home("tool-result");
+        crate::file_store::ensure_ready(&memory_home, true).unwrap();
+        let registry = registry::Registry::new();
+        let request: JsonRpcRequest = serde_json::from_value(serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/call",
+            "params": {
+                "name": "query_registry",
+                "arguments": { "category": "data" }
+            }
+        }))
+        .unwrap();
+
+        let response = handle_request(&request, &memory_home, &registry).unwrap();
+        let result = response.result.unwrap();
+        assert_eq!(result["isError"], false);
+        assert_eq!(result["content"][0]["type"], "text");
+        assert!(result.get("structuredContent").is_some());
+    }
+
+    #[test]
+    fn initialized_notification_has_no_response() {
+        let memory_home = temp_memory_home("notification");
+        crate::file_store::ensure_ready(&memory_home, true).unwrap();
+        let registry = registry::Registry::new();
+        let request: JsonRpcRequest = serde_json::from_value(serde_json::json!({
+            "jsonrpc": "2.0",
+            "method": "notifications/initialized"
+        }))
+        .unwrap();
+
+        assert!(handle_request(&request, &memory_home, &registry).is_none());
+    }
 }

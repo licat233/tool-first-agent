@@ -8,6 +8,7 @@ The MCP server runs as a stdio JSON-RPC 2.0 process. The host agent (Hermes,
 Claude Code, Codex) launches it and communicates over stdin/stdout.
 
 ```bash
+tool-first memory init --json  # run once for a new intended memory home
 tool-first mcp serve
 ```
 
@@ -15,6 +16,7 @@ tool-first mcp serve
 
 | Tool | Description | Input |
 |------|-------------|-------|
+| `advise_tool_use` | Recommend existing tools before code | `task`, `category?`, `limit?` |
 | `resolve_memory_home` | Resolve canonical memory home | — |
 | `query_registry` | Find candidate tools | `category?`, `task?` |
 | `detect_candidates` | Detect installed tools | `category?`, `tools?` |
@@ -39,6 +41,7 @@ mcp_servers:
     connect_timeout: 60
     tools:
       include:
+        - advise_tool_use
         - resolve_memory_home
         - query_registry
         - detect_candidates
@@ -73,6 +76,7 @@ See `references/agent-integration.md` for details.
 
 ```bash
 # Verify the binary works
+tool-first memory init --json
 tool-first doctor
 
 # Start MCP server and test a simple request

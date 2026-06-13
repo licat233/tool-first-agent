@@ -52,21 +52,21 @@ pub struct MemoryRedirectMarker {
 pub fn resolve_memory_home(cfg: &Config) -> PathBuf {
     // 1. env var
     if let Ok(env_home) = std::env::var("TOOL_FIRST_MEMORY_HOME") {
-        return PathBuf::from(shellexpand(&env_home));
+        return follow_redirects(PathBuf::from(shellexpand(&env_home)));
     }
 
     // 2. config.memory_home
     if let Some(ref home) = cfg.memory_home {
-        return PathBuf::from(shellexpand(home));
+        return follow_redirects(PathBuf::from(shellexpand(home)));
     }
 
     // 3. config.file.base_dir
     if let Some(ref base) = cfg.file.base_dir {
-        return PathBuf::from(shellexpand(base));
+        return follow_redirects(PathBuf::from(shellexpand(base)));
     }
 
     // 4. default
-    default_memory_home()
+    follow_redirects(default_memory_home())
 }
 
 pub fn default_memory_home() -> PathBuf {
@@ -105,6 +105,22 @@ pub fn ensure_marker(memory_home: &PathBuf) -> Result<bool, String> {
 
 /// Check for `.tool-memory-redirect` in a directory.
 /// Returns the redirect target if found.
+fn follow_redirects(mut path: PathBuf) -> PathBuf {
+    for _ in 0..8 {
+        match check_redirect(&path) {
+            Some(next) => {
+                let next_path = PathBuf::from(shellexpand(&next));
+                if next_path == path {
+                    break;
+                }
+                path = next_path;
+            }
+            None => break,
+        }
+    }
+    path
+}
+
 pub fn check_redirect(dir: &PathBuf) -> Option<String> {
     let path = dir.join(".tool-memory-redirect");
     if !path.exists() {
@@ -210,4 +226,35 @@ fn shellexpand(s: &str) -> String {
         }
     }
     s.to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn temp_memory_home(name: &str) -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "tool-first-resolver-test-{name}-{}",
+            uuid::Uuid::new_v4()
+        ))
+    }
+
+    #[test]
+    fn resolve_memory_home_follows_redirect_marker() {
+        let old_home = temp_memory_home("old");
+        let new_home = temp_memory_home("new");
+        std::fs::create_dir_all(&old_home).unwrap();
+        std::fs::write(
+            old_home.join(".tool-memory-redirect"),
+            serde_json::json!({
+                "redirect_to": new_home.to_string_lossy(),
+                "reason": "test migration",
+                "do_not_write_here": true
+            })
+            .to_string(),
+        )
+        .unwrap();
+
+        assert_eq!(follow_redirects(old_home), new_home);
+    }
 }

@@ -1,6 +1,6 @@
 [package]
 name = "tool-first"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "Fast local runtime core for tool-first-agent — CLI + MCP for shared file-based tool-memory, registry query, and tool detection."
 license = "MIT"

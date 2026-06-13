@@ -45,6 +45,10 @@ pub fn load() -> Config {
 ///   2. ./memory_config.yaml  (next to binary / project root)
 ///   3. ~/.config/tool-first-agent/config.yaml
 ///   4. ~/.config/tool-first-agent/memory_config.yaml
+pub fn allow_create_new_home(cfg: &Config) -> bool {
+    cfg.write_policy.allow_create_new_home.unwrap_or(true)
+}
+
 pub fn find_config_path() -> Option<PathBuf> {
     // 1. env override
     if let Ok(env_path) = std::env::var("TOOL_FIRST_MEMORY_CONFIG") {

@@ -20,7 +20,14 @@ pub struct RetainResult {
 }
 
 /// Ensure the store is ready (dirs exist, marker exists).
-pub fn ensure_ready(memory_home: &PathBuf) -> Result<(), String> {
+pub fn ensure_ready(memory_home: &PathBuf, allow_create_new_home: bool) -> Result<(), String> {
+    if !memory_home.exists() && !allow_create_new_home {
+        return Err(format!(
+            "Memory home does not exist and write_policy.allow_create_new_home is false: {}. Run `tool-first memory init` after confirming this path is intended.",
+            memory_home.display()
+        ));
+    }
+
     let records_dir = memory_home.join("records");
     fs::create_dir_all(&records_dir).map_err(|e| format!("Failed to create records dir: {e}"))?;
     resolver::ensure_marker(memory_home)?;
@@ -31,7 +38,7 @@ pub fn ensure_ready(memory_home: &PathBuf) -> Result<(), String> {
 pub fn retain(memory_home: &PathBuf, record: &MemoryRecord) -> Result<RetainResult, String> {
     let records_dir = memory_home.join("records");
     fs::create_dir_all(&records_dir).map_err(|e| format!("Failed to create records dir: {e}"))?;
-    let _ = resolver::ensure_marker(memory_home);
+    resolver::ensure_marker(memory_home)?;
 
     let filename = generate_filename(record);
     let target = records_dir.join(&filename);
@@ -131,6 +138,7 @@ pub fn backend_info(memory_home: &PathBuf) -> serde_json::Value {
         "memory_home": memory_home.to_string_lossy(),
         "records_dir": memory_home.join("records").to_string_lossy(),
         "record_count": count(memory_home),
+        "availability_count": get_availability(memory_home, None).len(),
         "TOOL_FIRST_MEMORY_HOME": std::env::var("TOOL_FIRST_MEMORY_HOME").unwrap_or_else(|_| "(not set)".to_string()),
     })
 }
@@ -246,4 +254,48 @@ fn score_record(record: &MemoryRecord, terms: &[String]) -> usize {
     }
     let haystack = tokenize(&parts.join(" "));
     terms.iter().filter(|t| haystack.contains(t)).count()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn temp_memory_home(name: &str) -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "tool-first-file-store-test-{name}-{}",
+            uuid::Uuid::new_v4()
+        ))
+    }
+
+    #[test]
+    fn ensure_ready_respects_create_policy() {
+        let memory_home = temp_memory_home("policy");
+        let err = ensure_ready(&memory_home, false).unwrap_err();
+        assert!(err.contains("allow_create_new_home is false"));
+        assert!(!memory_home.exists());
+
+        ensure_ready(&memory_home, true).unwrap();
+        assert!(memory_home.join("records").is_dir());
+        assert!(resolver::has_marker(&memory_home));
+    }
+
+    #[test]
+    fn get_availability_filters_by_tool() {
+        let memory_home = temp_memory_home("availability");
+        ensure_ready(&memory_home, true).unwrap();
+        let mut record = MemoryRecord {
+            record_type: Some("availability".to_string()),
+            category: Some("data".to_string()),
+            tool: Some("jq".to_string()),
+            status: Some("available".to_string()),
+            ..Default::default()
+        };
+        record.enrich();
+        retain(&memory_home, &record).unwrap();
+
+        let tools = vec!["jq".to_string()];
+        let records = get_availability(&memory_home, Some(&tools));
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].tool.as_deref(), Some("jq"));
+    }
 }

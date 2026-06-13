@@ -77,17 +77,18 @@ AI agents often write custom scripts when `pandoc`, `jq`, `ffmpeg`, or `magick` 
 5. **Retains new experience** — records successes and failures for future use
 
 ```text
-Before writing code → Load skill → Classify task → Query registry → Detect candidates → Recall experience → Use existing tool
+Before writing code → Load skill → Run `tool-first advise --task "..."` → Use recommended existing tool → Write code only if justified
 ```
 
 ### Quick Start
 
 ```bash
 # Download pre-built binary (macOS, no Rust required)
-curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.1.0/tool-first-universal-apple-darwin.tar.gz | tar xz
+curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.0/tool-first-universal-apple-darwin.tar.gz | tar xz
 mv tool-first-universal /usr/local/bin/tool-first
 
-# Verify
+# Initialize memory home once, then verify
+tool-first memory init --json
 tool-first doctor
 
 # Query registry
@@ -95,6 +96,7 @@ tool-first registry query --category document --json
 
 # Detect tools
 tool-first tools detect --category document --json
+tool-first tools detect --category document --record --json
 ```
 
 > Linux users: build from source with `cargo build --release` (requires Rust 1.75+).
@@ -103,12 +105,14 @@ tool-first tools detect --category document --json
 
 ```bash
 tool-first memory resolve --json          # Resolve canonical memory home
+tool-first memory init --json             # Initialize the chosen memory home after explicit intent
 tool-first memory recall --task <text>    # Search tool-memory
 tool-first memory record '<json>' --json  # Persist a record
 tool-first memory check-conflicts --json  # Check for path conflicts
 tool-first registry query --category <c>  # Query registry by category
 tool-first registry query --task <text>   # Query registry by task
 tool-first tools detect --category <c>    # Detect installed tools
+tool-first tools detect --category <c> --record  # Persist availability records
 tool-first doctor                          # Run diagnostics
 tool-first mcp serve                       # Start MCP stdio server
 ```
@@ -238,15 +242,15 @@ Do not create or duplicate full tool-first rules under 02-Rules/Tool-Inventory o
 Download the pre-built binary from GitHub Releases (no Rust required):
 
 macOS (universal, Intel + Apple Silicon):
-  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.1.0/tool-first-universal-apple-darwin.tar.gz | tar xz
+  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.0/tool-first-universal-apple-darwin.tar.gz | tar xz
   mv tool-first-universal /usr/local/bin/tool-first
 
 macOS (Apple Silicon only):
-  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.1.0/tool-first-aarch64-apple-darwin.tar.gz | tar xz
+  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.0/tool-first-aarch64-apple-darwin.tar.gz | tar xz
   mv tool-first-aarch64 /usr/local/bin/tool-first
 
 macOS (Intel only):
-  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.1.0/tool-first-x86_64-apple-darwin.tar.gz | tar xz
+  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.0/tool-first-x86_64-apple-darwin.tar.gz | tar xz
   mv tool-first-x86_64 /usr/local/bin/tool-first
 
 If no pre-built binary is available for your platform, build from source:
@@ -275,6 +279,7 @@ For Hermes Agent — add to ~/.hermes/SOUL.md:
   2. Resolve the shared tool-memory home — check TOOL_FIRST_MEMORY_HOME.
   3. Query the registry: tool-first registry query --category <cat>
   4. Detect only those candidates: tool-first tools detect --category <cat>
+     Optionally persist availability with: tool-first tools detect --category <cat> --record
   5. Recall past experience: tool-first memory recall --task "<description>"
   6. Use an existing tool when 1–3 commands can solve the task.
   7. Write code only when tools are missing, fail, or the task requires custom logic.
@@ -290,6 +295,7 @@ For Claude Code — add to ~/.claude/CLAUDE.md:
   2. Resolve the shared tool-memory home — check TOOL_FIRST_MEMORY_HOME env var.
   3. Query the registry: tool-first registry query --category <cat> --json
   4. Detect only those candidates: tool-first tools detect --category <cat> --json
+     Optionally persist availability with: tool-first tools detect --category <cat> --record --json
   5. Recall past experience: tool-first memory recall --task "<description>" --json
   6. Use an existing tool when 1–3 commands can solve the task.
   7. Write code only when tools are missing, fail, or the task requires custom logic.
@@ -304,7 +310,7 @@ For Codex — add to ~/.codex/AGENTS.md:
 ## Step 4: Verify
 
 Run `tool-first doctor` to verify the setup.
-Run `tool-first memory resolve --json` to check memory home resolution.
+Run `tool-first memory resolve --json` to check memory home resolution. If the resolved directory is intentional and missing, run `tool-first memory init --json` before writes or MCP startup.
 
 Before writing custom code for file conversion, document processing, PDF handling,
 image/media processing, archive operations, data transformation, search, web
@@ -427,10 +433,11 @@ AI 助手经常在 `pandoc`、`jq`、`ffmpeg`、`magick` 等工具一条命令�
 
 ```bash
 # 下载预编译二进制（macOS，无需 Rust 环境）
-curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.1.0/tool-first-universal-apple-darwin.tar.gz | tar xz
+curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.0/tool-first-universal-apple-darwin.tar.gz | tar xz
 mv tool-first-universal /usr/local/bin/tool-first
 
-# 验证
+# 初始化 memory home 一次，然后验证
+tool-first memory init --json
 tool-first doctor
 
 # 查询注册表
@@ -438,6 +445,7 @@ tool-first registry query --category document --json
 
 # 检测已安装工具
 tool-first tools detect --category document --json
+tool-first tools detect --category document --record --json
 ```
 
 > Linux 用户：需要从源码编译 `cargo build --release`（需要 Rust 1.75+）。
@@ -446,11 +454,13 @@ tool-first tools detect --category document --json
 
 ```bash
 tool-first memory resolve --json          # 解析 canonical memory home
+tool-first memory init --json             # 明确确认后初始化 memory home
 tool-first memory recall --task <text>    # 搜索工具记忆
 tool-first memory record '<json>' --json  # 写入一条记录
 tool-first memory check-conflicts --json  # 检查路径冲突
 tool-first registry query --category <c>  # 按类别查询注册表
 tool-first tools detect --category <c>    # 检测已安装工具
+tool-first tools detect --category <c> --record  # 写入 availability 记录
 tool-first doctor                          # 运行诊断
 tool-first mcp serve                       # 启动 MCP stdio 服务器
 ```

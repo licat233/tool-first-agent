@@ -25,7 +25,7 @@ It is **not** current truth. It is **not** user-approved long-term memory. It is
 1. If `TOOL_FIRST_MEMORY_HOME` is set, treat it as the canonical home.
 2. Do not create private tool-memory elsewhere.
 3. Do not silently fall back while it exists.
-4. If the directory does not exist, initialize it after confirming intent.
+4. If the directory does not exist, initialize it after confirming intent with `tool-first memory init`.
 5. Add `.tool-memory-home` marker if missing.
 
 ## Recommended Locations
