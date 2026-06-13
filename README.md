@@ -442,7 +442,7 @@ that can launch local MCP servers.
 Hermes example:
 
   mcp_servers:
-    tfa:
+    tool_first:
       command: "/absolute/path/to/tool-first"
       args: ["mcp", "serve"]
       env:
@@ -469,7 +469,7 @@ When MCP is available, prefer the MCP tool:
 
 Hermes may expose it as:
 
-  mcp_tfa_advise_tool_use
+  mcp_tool_first_advise_tool_use
 
 ## Step 6: Verify behavior
 

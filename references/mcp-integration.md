@@ -31,7 +31,7 @@ Add to `~/.hermes/config.yaml`:
 
 ```yaml
 mcp_servers:
-  tfa:
+  tool_first:
     command: "/path/to/tool-first"
     args: ["mcp", "serve"]
     env:
@@ -56,7 +56,7 @@ mcp_servers:
 Hermes registers MCP tools as:
 
 ```text
-mcp_tfa_<tool_name>
+mcp_tool_first_<tool_name>
 ```
 
 ## Claude Code Integration
