@@ -1,7 +1,9 @@
 # CLAUDE.md Integration — Tool-First Rule
 
 Add this rule to `~/.claude/CLAUDE.md` so Claude Code checks existing tools
-before writing custom code.
+before writing custom code. Do not install this skill into a project-local
+`.claude/` directory unless the user explicitly asks for a project-specific
+override.
 
 ## Recommended Rule Text
 
@@ -31,8 +33,10 @@ SKILL.md is the sole execution rule source.
 
 ## How It Works
 
-- `~/.claude/CLAUDE.md` is automatically loaded by Claude Code as global
-  instructions for every conversation.
+- `~/.claude/CLAUDE.md` is the default user-level rule file for this tool's
+  Claude Code integration.
+- Claude Code may also read project-local files, but this installer should not
+  create project-local `.claude/` files unless explicitly requested.
 - Claude Code skills are listed in the system-reminder's "available skills"
   section. The `tool-first-agent` skill is invoked via the `Skill` tool.
 - Without a CLAUDE.md rule, the skill is available but only loaded when
@@ -45,6 +49,8 @@ git clone https://github.com/licat233/tool-first-agent.git
 cd tool-first-agent
 cargo build --release
 cp target/release/tool-first /usr/local/bin/
+mkdir -p ~/.claude/skills
+git clone https://github.com/licat233/tool-first-agent.git ~/.claude/skills/tool-first-agent
 ```
 
 ## Environment Variables

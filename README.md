@@ -322,6 +322,11 @@ If no prebuilt binary matches the platform, build from source:
 
 Install the repository into the current agent's skill directory.
 
+The `tool-first` binary may be installed globally in PATH. Claude Code skill
+files should be installed under `~/.claude/` by default; do not install them
+into the current project unless the user explicitly asks for a project-local
+override.
+
 Codex:
 
   mkdir -p ~/.codex/skills
