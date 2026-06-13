@@ -1,148 +1,136 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1160" viewBox="0 0 1800 1160" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="2020" viewBox="0 0 1400 2020" role="img" aria-labelledby="title desc">
   <title id="title">tool-first-agent workflow and architecture</title>
-  <desc id="desc">A large readable diagram explaining how tool-first-agent gates AI agents before custom code, recommends local tools, and records shared tool-memory.</desc>
+  <desc id="desc">Readable workflow and architecture diagram for tool-first-agent.</desc>
   <defs>
     <style>
-      .bg { fill: #f6f8fb; }
-      .title { font: 800 54px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #111827; letter-spacing: 0; }
-      .subtitle { font: 500 24px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #4b5563; }
-      .section-title { font: 800 30px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172554; }
-      .label { font: 750 27px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #111827; }
-      .small { font: 500 21px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #374151; }
-      .mono { font: 650 20px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fill: #1f2937; }
-      .note { font: 650 23px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #0f172a; }
-      .card { fill: #ffffff; stroke: #d7dee9; stroke-width: 2.2; rx: 22; }
-      .gate { fill: #e0f2fe; stroke: #0284c7; stroke-width: 3; rx: 24; }
-      .decision { fill: #fff7ed; stroke: #ea580c; stroke-width: 3; }
-      .success { fill: #dcfce7; stroke: #16a34a; stroke-width: 3; rx: 22; }
-      .warn { fill: #fef3c7; stroke: #d97706; stroke-width: 3; rx: 22; }
-      .code { fill: #f3e8ff; stroke: #9333ea; stroke-width: 3; rx: 22; }
-      .data { fill: #eef2ff; stroke: #4f46e5; stroke-width: 3; rx: 22; }
-      .runtime { fill: #ecfeff; stroke: #0891b2; stroke-width: 3; rx: 28; }
-      .agent { fill: #f8fafc; stroke: #64748b; stroke-width: 2.5; rx: 22; }
-      .arrow { stroke: #334155; stroke-width: 4; fill: none; marker-end: url(#arrow); }
-      .arrow-soft { stroke: #64748b; stroke-width: 3.2; fill: none; marker-end: url(#arrow-soft); stroke-dasharray: 8 8; }
+      .bg { fill: #f7f9fc; }
+      .title { font: 800 52px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #111827; }
+      .subtitle { font: 500 25px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
+      .section { font: 800 34px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #0f172a; }
+      .label { font: 800 27px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #111827; }
+      .body { font: 520 22px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #334155; }
+      .mono { font: 700 20px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fill: #1f2937; }
+      .tiny { font: 650 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
+      .agent { fill: #f8fafc; stroke: #64748b; stroke-width: 2.8; rx: 24; }
+      .gate { fill: #e0f2fe; stroke: #0284c7; stroke-width: 3.2; rx: 26; }
+      .signals { fill: #eef2ff; stroke: #4f46e5; stroke-width: 3; rx: 26; }
+      .decision { fill: #fff7ed; stroke: #ea580c; stroke-width: 3.2; }
+      .good { fill: #dcfce7; stroke: #16a34a; stroke-width: 3; rx: 24; }
+      .warn { fill: #fef3c7; stroke: #d97706; stroke-width: 3; rx: 24; }
+      .purple { fill: #f3e8ff; stroke: #9333ea; stroke-width: 3; rx: 24; }
+      .record { fill: #ffffff; stroke: #d6deea; stroke-width: 2.4; rx: 24; }
+      .arch { fill: #ecfeff; stroke: #0891b2; stroke-width: 3; rx: 26; }
+      .data { fill: #f8fafc; stroke: #475569; stroke-width: 2.5; rx: 24; }
       .pill { fill: #111827; rx: 18; }
-      .pill-text { font: 750 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #ffffff; }
+      .pillText { font: 800 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #ffffff; }
+      .arrow { stroke: #334155; stroke-width: 4.2; fill: none; marker-end: url(#arrow); }
+      .soft { stroke: #64748b; stroke-width: 3.2; fill: none; marker-end: url(#softArrow); stroke-dasharray: 9 8; }
     </style>
     <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/>
+      <path d="M0 0 L10 5 L0 10 Z" fill="#334155"/>
     </marker>
-    <marker id="arrow-soft" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+    <marker id="softArrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#64748b"/>
     </marker>
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+    <filter id="shadow" x="-8%" y="-8%" width="116%" height="128%">
       <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.12"/>
     </filter>
   </defs>
 
-  <rect class="bg" x="0" y="0" width="1800" height="1160"/>
+  <rect class="bg" width="1400" height="2020"/>
 
-  <text class="title" x="80" y="88">tool-first-agent 工作流与架构</text>
+  <text class="title" x="80" y="86">tool-first-agent 工作流与架构</text>
   <text class="subtitle" x="82" y="128">AI Agent 写脚本前的工具优先门卫：先查成熟工具和历史经验，能用现成工具就不要造轮子。</text>
+  <rect class="pill" x="80" y="166" width="258" height="38"/>
+  <text class="pillText" x="104" y="191">Core command</text>
+  <text class="mono" x="365" y="192">tool-first advise --task "&lt;description&gt;" --json</text>
 
-  <rect class="pill" x="80" y="158" width="260" height="36"/>
-  <text class="pill-text" x="103" y="182">Core command: advise</text>
-  <text class="mono" x="365" y="183">tool-first advise --task "&lt;description&gt;" --json</text>
+  <text class="section" x="80" y="278">1. Agent 的工作流</text>
 
-  <!-- Main workflow -->
-  <text class="section-title" x="80" y="260">1. Agent 执行逻辑</text>
+  <rect class="agent" filter="url(#shadow)" x="80" y="322" width="360" height="160"/>
+  <text class="label" x="122" y="378">Agent 收到任务</text>
+  <text class="body" x="122" y="418">文件 / 数据 / PDF / 图片</text>
+  <text class="body" x="122" y="452">搜索 / 压缩 / 开发工具</text>
 
-  <rect class="agent" filter="url(#shadow)" x="80" y="300" width="310" height="130"/>
-  <text class="label" x="116" y="350">Agent 收到任务</text>
-  <text class="small" x="116" y="386">文件处理 / 数据转换</text>
-  <text class="small" x="116" y="414">PDF / 图片 / 搜索 / 开发</text>
+  <rect class="gate" filter="url(#shadow)" x="520" y="314" width="360" height="176"/>
+  <text class="label" x="562" y="370">Tool-First Gate</text>
+  <text class="body" x="562" y="412">写代码前先问 tool-first</text>
+  <text class="mono" x="562" y="450">advise --task ... --json</text>
 
-  <rect class="gate" filter="url(#shadow)" x="480" y="292" width="360" height="146"/>
-  <text class="label" x="525" y="344">Tool-First Gate</text>
-  <text class="small" x="525" y="382">先问 tool-first，而不是先写脚本</text>
-  <text class="mono" x="525" y="414">advise --task ... --json</text>
+  <rect class="signals" filter="url(#shadow)" x="960" y="286" width="360" height="232"/>
+  <text class="label" x="1002" y="340">advise 汇总信号</text>
+  <text class="body" x="1002" y="382">1. 推断任务类别</text>
+  <text class="body" x="1002" y="418">2. 查 registry/tools.yaml</text>
+  <text class="body" x="1002" y="454">3. 检测候选工具</text>
+  <text class="body" x="1002" y="490">4. 回忆 tool-memory</text>
 
-  <rect class="card" filter="url(#shadow)" x="930" y="278" width="720" height="176"/>
-  <text class="label" x="975" y="328">advise 汇总 4 个信号</text>
-  <text class="small" x="975" y="370">1. 推断任务类别  2. 查询 registry/tools.yaml</text>
-  <text class="small" x="975" y="405">3. 只检测候选工具  4. 回忆 tool-memory</text>
-  <text class="small" x="975" y="438">输出 recommendation，给 Agent 明确下一步</text>
+  <path class="arrow" d="M440 402 H510"/>
+  <path class="arrow" d="M880 402 H950"/>
 
-  <path class="arrow" d="M390 365 H470"/>
-  <path class="arrow" d="M840 365 H920"/>
+  <polygon class="decision" filter="url(#shadow)" points="535,675 700,570 865,675 700,780"/>
+  <text class="label" x="626" y="658">Decision</text>
+  <text class="body" x="600" y="700">该怎么行动？</text>
+  <path class="arrow" d="M1140 518 C1100 600 960 658 875 672"/>
 
-  <polygon class="decision" filter="url(#shadow)" points="865,565 1045,460 1225,565 1045,670"/>
-  <text class="label" x="972" y="548">Decision</text>
-  <text class="small" x="948" y="585">下一步怎么做？</text>
+  <rect class="good" filter="url(#shadow)" x="80" y="884" width="580" height="168"/>
+  <text class="label" x="122" y="940">use_existing_tool</text>
+  <text class="body" x="122" y="984">直接使用成熟本地工具</text>
+  <text class="body" x="122" y="1018">jq / pandoc / ffmpeg / sips / rg</text>
 
-  <path class="arrow" d="M1290 454 C1290 510 1245 535 1210 552"/>
+  <rect class="warn" filter="url(#shadow)" x="740" y="884" width="580" height="168"/>
+  <text class="label" x="782" y="940">verify_recalled_recipe</text>
+  <text class="body" x="782" y="984">复查历史命令是否仍可用</text>
+  <text class="body" x="782" y="1018">有效就复用，不重新造轮子</text>
 
-  <rect class="success" filter="url(#shadow)" x="90" y="760" width="380" height="150"/>
-  <text class="label" x="128" y="813">use_existing_tool</text>
-  <text class="small" x="128" y="852">使用成熟本地工具</text>
-  <text class="small" x="128" y="884">jq / pandoc / ffmpeg / sips / rg</text>
+  <rect class="warn" filter="url(#shadow)" x="80" y="1118" width="580" height="168"/>
+  <text class="label" x="122" y="1174">tool_known_but_missing</text>
+  <text class="body" x="122" y="1218">有匹配工具，但本机缺失</text>
+  <text class="body" x="122" y="1252">用 fallback，或询问后安装</text>
 
-  <rect class="warn" filter="url(#shadow)" x="520" y="760" width="380" height="150"/>
-  <text class="label" x="558" y="813">verify_recalled_recipe</text>
-  <text class="small" x="558" y="852">复查历史命令是否仍可用</text>
-  <text class="small" x="558" y="884">确认后复用，不重新造轮子</text>
+  <rect class="purple" filter="url(#shadow)" x="740" y="1118" width="580" height="168"/>
+  <text class="label" x="782" y="1174">write_code_allowed</text>
+  <text class="body" x="782" y="1218">只有工具不适合时</text>
+  <text class="body" x="782" y="1252">才允许写自定义代码</text>
 
-  <rect class="warn" filter="url(#shadow)" x="950" y="760" width="380" height="150"/>
-  <text class="label" x="988" y="813">tool_known_but_missing</text>
-  <text class="small" x="988" y="852">工具匹配但本机缺失</text>
-  <text class="small" x="988" y="884">用 fallback，或询问后安装</text>
+  <path class="arrow" d="M700 780 V848"/>
+  <text class="tiny" x="542" y="858">recommendation 输出以下行动之一</text>
 
-  <rect class="code" filter="url(#shadow)" x="1380" y="760" width="340" height="150"/>
-  <text class="label" x="1418" y="813">write_code_allowed</text>
-  <text class="small" x="1418" y="852">只有工具不适合时</text>
-  <text class="small" x="1418" y="884">才允许写自定义代码</text>
+  <rect class="record" filter="url(#shadow)" x="260" y="1370" width="880" height="136"/>
+  <text class="label" x="326" y="1422">任务完成后，记录可复用经验</text>
+  <text class="body" x="326" y="1462">availability / recipe / failure / policy</text>
+  <text class="tiny" x="326" y="1492">只记录实际检测或执行过的结果，不写猜测。</text>
 
-  <path class="arrow" d="M995 650 C820 720 450 725 285 752"/>
-  <path class="arrow" d="M1030 670 C960 720 805 725 720 752"/>
-  <path class="arrow" d="M1080 670 C1130 720 1145 724 1145 752"/>
-  <path class="arrow" d="M1195 595 C1435 650 1545 700 1550 752"/>
+  <path class="arrow" d="M700 1286 V1360"/>
 
-  <rect class="card" filter="url(#shadow)" x="640" y="980" width="520" height="110"/>
-  <text class="label" x="690" y="1027">完成任务后记录经验</text>
-  <text class="small" x="690" y="1064">availability / recipe / failure / policy</text>
+  <line x1="80" y1="1586" x2="1320" y2="1586" stroke="#cbd5e1" stroke-width="3"/>
 
-  <path class="arrow" d="M280 910 C365 982 530 1032 632 1035"/>
-  <path class="arrow" d="M710 910 V972"/>
-  <path class="arrow" d="M1140 910 C1070 960 1000 980 945 978"/>
-  <path class="arrow" d="M1550 910 C1375 985 1235 1032 1168 1035"/>
+  <text class="section" x="80" y="1648">2. 底层架构与集成方式</text>
 
-  <!-- Architecture -->
-  <text class="section-title" x="80" y="560">2. 底层架构</text>
+  <rect class="arch" filter="url(#shadow)" x="80" y="1690" width="360" height="120"/>
+  <text class="label" x="122" y="1740">Rust Runtime</text>
+  <text class="body" x="122" y="1778">CLI + MCP + detect</text>
 
-  <rect class="runtime" filter="url(#shadow)" x="80" y="595" width="360" height="130"/>
-  <text class="label" x="120" y="645">Rust Runtime Core</text>
-  <text class="small" x="120" y="682">CLI + MCP + registry + detect</text>
-  <text class="small" x="120" y="714">快速、本地、可复用</text>
+  <rect class="data" filter="url(#shadow)" x="520" y="1690" width="360" height="120"/>
+  <text class="label" x="562" y="1740">registry/tools.yaml</text>
+  <text class="body" x="562" y="1778">工具候选与命令模板</text>
 
-  <rect class="data" filter="url(#shadow)" x="520" y="580" width="360" height="150"/>
-  <text class="label" x="560" y="630">registry/tools.yaml</text>
-  <text class="small" x="560" y="668">候选工具定义</text>
-  <text class="small" x="560" y="700">类别 / 优先级 / 命令模板</text>
+  <rect class="data" filter="url(#shadow)" x="960" y="1690" width="360" height="120"/>
+  <text class="label" x="1002" y="1740">tool-memory</text>
+  <text class="body" x="1002" y="1778">共享 JSON 经验记录</text>
 
-  <rect class="data" filter="url(#shadow)" x="960" y="580" width="360" height="150"/>
-  <text class="label" x="1000" y="630">tool-memory</text>
-  <text class="small" x="1000" y="668">共享运行时经验</text>
-  <text class="small" x="1000" y="700">一条记录一个 JSON 文件</text>
+  <rect class="data" filter="url(#shadow)" x="80" y="1840" width="360" height="120"/>
+  <text class="label" x="122" y="1890">Agent Rules</text>
+  <text class="body" x="122" y="1928">每次先过 advise</text>
 
-  <rect class="data" filter="url(#shadow)" x="1400" y="580" width="320" height="150"/>
-  <text class="label" x="1435" y="630">Agent Rules</text>
-  <text class="small" x="1435" y="668">Codex / Claude / Hermes</text>
-  <text class="small" x="1435" y="700">规则要求先过 advise</text>
+  <rect class="data" filter="url(#shadow)" x="520" y="1840" width="360" height="120"/>
+  <text class="label" x="562" y="1890">MCP Server</text>
+  <text class="body" x="562" y="1928">advise_tool_use</text>
 
-  <path class="arrow-soft" d="M440 652 H510"/>
-  <path class="arrow-soft" d="M880 652 H950"/>
-  <path class="arrow-soft" d="M1320 652 H1390"/>
+  <rect class="data" filter="url(#shadow)" x="960" y="1840" width="360" height="120"/>
+  <text class="label" x="1002" y="1890">Codex / Hermes / Claude</text>
+  <text class="body" x="1002" y="1928">用统一规则触发工具优先</text>
 
-  <!-- Integration row -->
-  <rect class="card" filter="url(#shadow)" x="80" y="980" width="430" height="110"/>
-  <text class="label" x="120" y="1027">Agent Integrations</text>
-  <text class="small" x="120" y="1064">Codex AGENTS.md · Claude CLAUDE.md · Hermes SOUL.md / MCP</text>
-
-  <rect class="card" filter="url(#shadow)" x="1290" y="980" width="430" height="110"/>
-  <text class="label" x="1330" y="1027">MCP Tool</text>
-  <text class="small" x="1330" y="1064">advise_tool_use / mcp_tfa_advise_tool_use</text>
-
-  <path class="arrow-soft" d="M510 1035 H632"/>
-  <path class="arrow-soft" d="M1168 1035 H1282"/>
+  <path class="soft" d="M440 1750 H510"/>
+  <path class="soft" d="M880 1750 H950"/>
+  <path class="soft" d="M700 1810 V1830"/>
 </svg>
