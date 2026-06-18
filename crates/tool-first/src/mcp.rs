@@ -92,7 +92,11 @@ fn handle_request(
                     },
                     {
                         "name": "resolve_memory_home",
-                        "description": "Resolve the canonical tool-memory home directory."
+                        "description": "Resolve the canonical tool-memory home directory.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {}
+                        }
                     },
                     {
                         "name": "query_registry",
@@ -150,11 +154,19 @@ fn handle_request(
                     },
                     {
                         "name": "check_conflicts",
-                        "description": "Check for multiple tool-memory home candidates."
+                        "description": "Check for multiple tool-memory home candidates.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {}
+                        }
                     },
                     {
                         "name": "doctor",
-                        "description": "Run diagnostic checks."
+                        "description": "Run diagnostic checks.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {}
+                        }
                     }
                 ]
             })
@@ -395,5 +407,32 @@ mod tests {
         .unwrap();
 
         assert!(handle_request(&request, &memory_home, &registry).is_none());
+    }
+
+    #[test]
+    fn every_listed_tool_has_an_object_input_schema() {
+        let memory_home = temp_memory_home("tool-schemas");
+        crate::file_store::ensure_ready(&memory_home, true).unwrap();
+        let registry = registry::Registry::new();
+        let request: JsonRpcRequest = serde_json::from_value(serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/list",
+            "params": {}
+        }))
+        .unwrap();
+
+        let response = handle_request(&request, &memory_home, &registry).unwrap();
+        let result = response.result.unwrap();
+        let tools = result["tools"].as_array().unwrap();
+
+        assert!(!tools.is_empty());
+        for tool in tools {
+            assert_eq!(
+                tool["inputSchema"]["type"], "object",
+                "tool {} must declare an object inputSchema",
+                tool["name"]
+            );
+        }
     }
 }
