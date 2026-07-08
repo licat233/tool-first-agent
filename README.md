@@ -89,7 +89,7 @@ Before writing code → Load skill → Run `tool-first advise --task "..."` → 
 
 ```bash
 # Download pre-built binary (macOS, no Rust required)
-curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.0/tool-first-universal-apple-darwin.tar.gz | tar xz
+curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.1/tool-first-universal-apple-darwin.tar.gz | tar xz
 mv tool-first-universal /usr/local/bin/tool-first
 
 # Initialize memory home once, then verify
@@ -229,7 +229,7 @@ Repository:
 https://github.com/licat233/tool-first-agent
 
 Current release:
-v0.2.0
+v0.2.1
 
 Supported agents:
 - Codex
@@ -238,9 +238,13 @@ Supported agents:
 
 Primary goal:
 Make this agent follow the tool-first principle. Before writing custom scripts,
-installing tools, or handling files/data with ad-hoc code, the agent must first
-ask `tool-first` whether an existing local tool or remembered recipe solves the
-task.
+installing tools, or doing file/data conversion, extraction, transformation, or
+batch processing with ad-hoc code, the agent must first ask `tool-first` whether
+an existing local tool or remembered recipe solves the task.
+
+Do not run the tool-first gate for ordinary conversation, explanations, code
+reading, planning, code review, repository summaries, or simple inspection
+commands such as `rg`, `sed`, `cat`, `ls`, and `git status`.
 
 Required first gate:
 
@@ -279,7 +283,7 @@ Detect the platform:
 For macOS, prefer the universal binary unless the user explicitly wants a
 single-architecture binary:
 
-  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.0/tool-first-universal-apple-darwin.tar.gz | tar xz
+  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.1/tool-first-universal-apple-darwin.tar.gz | tar xz
   chmod +x tool-first-universal
 
 Install it as `tool-first`.
@@ -307,11 +311,11 @@ Optional single-architecture downloads:
 
 Apple Silicon only:
 
-  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.0/tool-first-aarch64-apple-darwin.tar.gz | tar xz
+  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.1/tool-first-aarch64-apple-darwin.tar.gz | tar xz
 
 Intel only:
 
-  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.0/tool-first-x86_64-apple-darwin.tar.gz | tar xz
+  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.1/tool-first-x86_64-apple-darwin.tar.gz | tar xz
 
 If no prebuilt binary matches the platform, build from source:
 
@@ -616,7 +620,7 @@ AI 助手经常在 `pandoc`、`jq`、`ffmpeg`、`magick` 等工具一条命令�
 
 ```bash
 # 下载预编译二进制（macOS，无需 Rust 环境）
-curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.0/tool-first-universal-apple-darwin.tar.gz | tar xz
+curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.1/tool-first-universal-apple-darwin.tar.gz | tar xz
 mv tool-first-universal /usr/local/bin/tool-first
 
 # 初始化 memory home 一次，然后验证
