@@ -146,6 +146,8 @@ See [`references/mcp-integration.md`](references/mcp-integration.md) for Hermes 
 | **Claude Code** | `~/.claude/CLAUDE.md` | `~/.claude/skills/tool-first-agent/` |
 | **Codex** | `~/.codex/AGENTS.md` | `~/.codex/skills/tool-first-agent/` |
 
+See [`update.md`](update.md) for cross-agent update instructions.
+
 ### Memory Adapters
 
 The file adapter stores each tool-memory record as an individual JSON file:
@@ -655,6 +657,8 @@ tool-first mcp serve                       # 启动 MCP stdio 服务器
 | **Hermes Agent** | `~/.hermes/SOUL.md` | `~/.hermes/skills/devops/tool-first-agent/` |
 | **Claude Code** | `~/.claude/CLAUDE.md` | `~/.claude/skills/tool-first-agent/` |
 | **Codex** | `~/.codex/AGENTS.md` | `~/.codex/skills/tool-first-agent/` |
+
+跨 Agent 更新步骤见 [`update.md`](update.md)。
 
 ### 记忆适配器
 
