@@ -36,7 +36,8 @@ pub fn advise(
     let detect_tools = tools_to_detect(&candidates, resolved_category.as_deref());
     let detected = detect::detect(registry, resolved_category.as_deref(), &detect_tools);
     let memory = crate::file_store::recall(memory_home, task, resolved_category.as_deref(), limit);
-    let recommendation = recommend(&candidates, &detected, &memory);
+    let allow_category_fallback = category.is_some() || has_tool_action(task);
+    let recommendation = recommend(&candidates, &detected, &memory, allow_category_fallback);
 
     ToolAdvice {
         task: task.to_string(),
@@ -70,15 +71,12 @@ fn recommend(
     candidates: &[MatchedTool],
     detected: &[DetectionResult],
     memory: &[MemoryRecord],
+    allow_category_fallback: bool,
 ) -> Recommendation {
     let detected_by_tool: BTreeMap<&str, &DetectionResult> =
         detected.iter().map(|d| (d.tool.as_str(), d)).collect();
 
-    let has_strict_match = candidates.iter().any(|c| c.is_match);
-    for candidate in candidates
-        .iter()
-        .filter(|c| c.is_match || !has_strict_match)
-    {
+    for candidate in candidates.iter().filter(|c| c.is_match) {
         if let Some(result) = detected_by_tool.get(candidate.tool.as_str()) {
             if result.status == "available" || result.status == "present_unverified" {
                 return Recommendation {
@@ -91,6 +89,25 @@ fn recommend(
                     ),
                     command_templates: candidate.commands.clone(),
                 };
+            }
+        }
+    }
+
+    if allow_category_fallback {
+        for candidate in candidates {
+            if let Some(result) = detected_by_tool.get(candidate.tool.as_str()) {
+                if result.status == "available" || result.status == "present_unverified" {
+                    return Recommendation {
+                        decision: "use_existing_tool".to_string(),
+                        tool: Some(candidate.tool.clone()),
+                        category: Some(candidate.category.clone()),
+                        reason: format!(
+                            "{} is {} in the requested category; use it before writing custom code.",
+                            candidate.tool, result.status
+                        ),
+                        command_templates: candidate.commands.clone(),
+                    };
+                }
             }
         }
     }
@@ -108,11 +125,7 @@ fn recommend(
         };
     }
 
-    if let Some(candidate) = candidates
-        .iter()
-        .find(|c| c.is_match)
-        .or_else(|| candidates.first())
-    {
+    if let Some(candidate) = candidates.iter().find(|c| c.is_match) {
         return Recommendation {
             decision: "tool_known_but_missing".to_string(),
             tool: Some(candidate.tool.clone()),
@@ -132,6 +145,32 @@ fn recommend(
         reason: "No matching available tool or recalled recipe was found; custom code may be justified after checking relevant skills.".to_string(),
         command_templates: BTreeMap::new(),
     }
+}
+
+fn has_tool_action(task: &str) -> bool {
+    let text = task.to_lowercase();
+    let actions = [
+        "convert",
+        "extract",
+        "resize",
+        "compress",
+        "decompress",
+        "split",
+        "merge",
+        "query",
+        "filter",
+        "transform",
+        "download",
+        "scrape",
+        "render",
+        "ocr",
+        "archive",
+        "unzip",
+        "zip",
+        "parse",
+    ];
+
+    actions.iter().any(|action| text.contains(action))
 }
 
 fn memory_command_templates(record: &MemoryRecord) -> BTreeMap<String, String> {
@@ -280,6 +319,84 @@ mod tests {
 
         assert_eq!(advice.recommendation.decision, "use_existing_tool");
         assert_eq!(advice.recommendation.tool.as_deref(), Some("cargo"));
+    }
+
+    #[test]
+    fn advice_does_not_recommend_available_tool_without_match() {
+        let mut registry = Registry::new();
+        let mut category = Category {
+            description: None,
+            tools: BTreeMap::new(),
+        };
+        category.tools.insert(
+            "claude".to_string(),
+            ToolSpec {
+                priority: Some(10),
+                detect_names: vec!["claude".to_string()],
+                version_args: vec!["--version".to_string()],
+                handles: vec!["Claude Code assistant".to_string()],
+                commands: BTreeMap::from([("version".to_string(), "claude --version".to_string())]),
+                known_paths: Vec::new(),
+                app_bundle_paths: Vec::new(),
+                fallbacks: Vec::new(),
+            },
+        );
+        registry.insert("ai".to_string(), category);
+
+        let memory_home =
+            std::env::temp_dir().join(format!("tool-first-advice-test-{}", uuid::Uuid::new_v4()));
+        let advice = advise(
+            &registry,
+            &memory_home,
+            "explain react hooks dependency arrays",
+            None,
+            5,
+        );
+
+        assert_eq!(
+            advice.recommendation.decision,
+            "write_code_or_use_other_skill"
+        );
+        assert_eq!(advice.recommendation.tool, None);
+    }
+
+    #[test]
+    fn advice_recommends_category_tool_for_tool_action() {
+        let mut registry = Registry::new();
+        let mut category = Category {
+            description: None,
+            tools: BTreeMap::new(),
+        };
+        category.tools.insert(
+            "magick".to_string(),
+            ToolSpec {
+                priority: Some(10),
+                detect_names: vec!["magick".to_string()],
+                version_args: vec!["--version".to_string()],
+                handles: vec!["Convert, resize, crop, compress, compose images".to_string()],
+                commands: BTreeMap::from([(
+                    "resize".to_string(),
+                    "magick {input} -resize {size} {output}".to_string(),
+                )]),
+                known_paths: Vec::new(),
+                app_bundle_paths: Vec::new(),
+                fallbacks: Vec::new(),
+            },
+        );
+        registry.insert("image".to_string(), category);
+
+        let memory_home =
+            std::env::temp_dir().join(format!("tool-first-advice-test-{}", uuid::Uuid::new_v4()));
+        let advice = advise(
+            &registry,
+            &memory_home,
+            "resize png image to 800px",
+            None,
+            5,
+        );
+
+        assert_eq!(advice.recommendation.decision, "use_existing_tool");
+        assert_eq!(advice.recommendation.tool.as_deref(), Some("magick"));
     }
 
     #[test]

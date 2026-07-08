@@ -403,11 +403,15 @@ Use this rule text:
 
   ## Tool-First Rule
 
-  Before writing custom scripts, installing tools, or handling files/data with
-  ad-hoc code, always check whether an existing local tool already solves the
-  problem.
+  Before writing custom scripts, installing tools, or doing file/data
+  conversion, extraction, transformation, or batch processing with ad-hoc code,
+  check whether an existing local tool already solves the problem.
 
-  1. Run the one-step gate first:
+  Do not run this gate for ordinary conversation, explanations, code reading,
+  planning, code review, repository summaries, or simple inspection commands
+  such as rg, sed, cat, ls, and git status.
+
+  1. Run the one-step gate first only for in-scope tasks:
      tool-first advise --task "<description>" --json
   2. If the decision is use_existing_tool, use the recommended tool before
      writing custom code.

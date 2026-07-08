@@ -71,10 +71,15 @@ Add the Tool-First Rule to your Codex agent configuration:
 ```markdown
 ## Tool-First Rule
 
-Before writing custom scripts, installing new software, or handling files/data
-with ad-hoc code, check if an existing local tool already solves the problem.
+Before writing custom scripts, installing new software, or doing file/data
+conversion, extraction, transformation, or batch processing with ad-hoc code,
+check if an existing local tool already solves the problem.
 
-1. **Run the one-step gate first**:
+Do not run this gate for ordinary conversation, explanations, code reading,
+planning, code review, repository summaries, or simple inspection commands such
+as `rg`, `sed`, `cat`, `ls`, and `git status`.
+
+1. **Run the one-step gate first only for in-scope tasks**:
    `tool-first advise --task "<description>" --json`
 2. If the decision is `use_existing_tool`, use the recommended tool before
    writing custom code.

@@ -1,18 +1,23 @@
 ---
 name: tool-first-agent
 description: |
-  Use this skill before writing scripts, installing tools, or handling files/data
-  when an existing local tool may already solve the task. Provides a tool-first
-  workflow powered by a Rust runtime core, shared file-based tool-memory, and
-  the SKILL.md rule layer.
+  Use this skill before writing custom scripts, installing tools, or performing
+  file/data transformation, format conversion, extraction, batch processing, or
+  other command-line work that may already have a local tool. Do not use it for
+  ordinary conversation, explanations, code reading, or simple repository
+  inspection.
 ---
 
 # Tool First Agent
 
-Use this skill when the user asks to process files, convert formats, search text,
-handle JSON/CSV/XML/SQLite, work with PDF/Office documents, process images/audio/video,
-compress archives, install a utility, or write a script for a task that may already
-have a local tool.
+Use this skill when the user asks to convert formats, extract data, batch-process
+files, transform JSON/CSV/XML/SQLite, work with PDF/Office documents, process
+images/audio/video, compress archives, install a utility, or write a custom
+script for a task that may already have a local tool.
+
+Do not use this skill for normal chat, explanations, planning, code review,
+reading source files, summarizing a repository, or basic inspection commands
+such as `rg`, `sed`, `cat`, `ls`, and `git status`.
 
 ## Architecture
 
@@ -53,10 +58,10 @@ tool-first-agent/
 
 ## Core Rule
 
-Before writing custom code:
+Before writing custom code for file/data processing or command-line automation:
 
 1. **Check relevant skills first** — skills encode specialized knowledge, API endpoints, and proven workflows that outperform general-purpose approaches. On Hermes, use `skills_list` and `skill_view`. On Claude Code, skills are listed in the system-reminder's "available skills" section — invoke via the `Skill` tool. Do not perform blind filesystem scans before checking skills.
-2. Run `tool-first advise --task "<description>" --json` as the one-step gate when the CLI is available.
+2. Run `tool-first advise --task "<description>" --json` as the one-step gate when the task fits the scope above and the CLI is available.
 3. If `advise` is unavailable, classify the task category manually.
 4. **Resolve the shared tool-memory home** — check `TOOL_FIRST_MEMORY_HOME` env var.
 5. Query the registry for candidate tools.
