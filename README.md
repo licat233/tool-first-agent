@@ -96,11 +96,16 @@ Before incidental code reimplements a commodity operation → Run `tool-first ad
   when `--recall` is explicitly requested.
 - Default CLI and MCP responses are compact; use `--verbose` for diagnostics.
 
+### v0.3.1: Standalone Binary Fix
+
+- Embeds the default tool registry in the executable, so downloaded binaries
+  work outside the source repository without a separate `registry/tools.yaml`.
+
 ### Quick Start
 
 ```bash
 # Download pre-built binary (macOS, no Rust required)
-curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.3.0/tool-first-universal-apple-darwin.tar.gz | tar xz
+curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.3.1/tool-first-universal-apple-darwin.tar.gz | tar xz
 mv tool-first-universal /usr/local/bin/tool-first
 
 # Initialize memory home once, then verify
@@ -240,7 +245,7 @@ Repository:
 https://github.com/licat233/tool-first-agent
 
 Current release:
-v0.3.0
+v0.3.1
 
 Supported agents:
 - Codex
@@ -290,7 +295,7 @@ Detect the platform:
 For macOS, prefer the universal binary unless the user explicitly wants a
 single-architecture binary:
 
-  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.3.0/tool-first-universal-apple-darwin.tar.gz | tar xz
+  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.3.1/tool-first-universal-apple-darwin.tar.gz | tar xz
   chmod +x tool-first-universal
 
 Install it as `tool-first`.
@@ -318,11 +323,11 @@ Optional single-architecture downloads:
 
 Apple Silicon only:
 
-  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.3.0/tool-first-aarch64-apple-darwin.tar.gz | tar xz
+  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.3.1/tool-first-aarch64-apple-darwin.tar.gz | tar xz
 
 Intel only:
 
-  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.3.0/tool-first-x86_64-apple-darwin.tar.gz | tar xz
+  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.3.1/tool-first-x86_64-apple-darwin.tar.gz | tar xz
 
 If no prebuilt binary matches the platform, build from source:
 
@@ -632,11 +637,16 @@ AI 助手经常在 `pandoc`、`jq`、`ffmpeg`、`magick` 等工具一条命令�
 - 只有候选工具不可用或显式传入 `--recall` 时才查询 tool-memory。
 - CLI 和 MCP 默认返回紧凑结果；诊断明细需显式传入 `--verbose`。
 
+### v0.3.1：独立二进制修复
+
+- 将默认工具注册表编译进可执行文件，从 Release 下载的二进制无需额外
+  `registry/tools.yaml`，也能在源码仓库之外正常运行。
+
 ### 快速开始
 
 ```bash
 # 下载预编译二进制（macOS，无需 Rust 环境）
-curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.3.0/tool-first-universal-apple-darwin.tar.gz | tar xz
+curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.3.1/tool-first-universal-apple-darwin.tar.gz | tar xz
 mv tool-first-universal /usr/local/bin/tool-first
 
 # 初始化 memory home 一次，然后验证

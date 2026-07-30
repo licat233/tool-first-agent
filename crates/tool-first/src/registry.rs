@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
+const EMBEDDED_REGISTRY: &str = include_str!("../../../registry/tools.yaml");
+
 /// Top-level structure of `registry/tools.yaml`.
 pub type Registry = BTreeMap<String, Category>;
 
@@ -49,8 +51,11 @@ pub struct MatchedTool {
 
 /// Load `registry/tools.yaml` from the project.
 pub fn load_registry() -> Result<Registry, String> {
-    let path = find_registry()?;
-    load_from_path(&path)
+    match find_registry() {
+        Ok(path) => load_from_path(&path),
+        Err(_) => serde_yaml::from_str(EMBEDDED_REGISTRY)
+            .map_err(|e| format!("Failed to parse embedded registry YAML: {e}")),
+    }
 }
 
 pub fn load_from_path(path: &Path) -> Result<Registry, String> {
@@ -155,4 +160,16 @@ fn matches_task(spec: &ToolSpec, text: &str) -> bool {
     text.to_lowercase()
         .split_whitespace()
         .all(|token| haystack.contains(token))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn embedded_registry_is_valid_and_nonempty() {
+        let registry: Registry = serde_yaml::from_str(EMBEDDED_REGISTRY).unwrap();
+        assert!(registry.contains_key("image"));
+        assert!(registry.contains_key("document"));
+    }
 }
