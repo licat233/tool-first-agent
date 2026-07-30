@@ -79,12 +79,21 @@ fn handle_request(
                 "tools": [
                     {
                         "name": "advise_tool_use",
-                        "description": "Recommend existing local tools before writing custom code.",
+                        "description": "Use only when an agent is about to write incidental code that reimplements a commodity local operation, or install a dependency. Do not use for ordinary coding, conversation, explanation, or code inspection.",
                         "inputSchema": {
                             "type": "object",
                             "properties": {
                                 "task": { "type": "string" },
-                                "category": { "type": "string" },
+                                "category": {
+                                    "type": "string",
+                                    "enum": ["document", "pdf", "image", "media", "data", "search", "archive", "dev", "web", "ai"]
+                                },
+                                "intent": {
+                                    "type": "string",
+                                    "enum": ["avoid_custom_code"]
+                                },
+                                "recall": { "type": "boolean", "default": false },
+                                "verbose": { "type": "boolean", "default": false },
                                 "limit": { "type": "integer", "default": 5 }
                             },
                             "required": ["task"]
@@ -187,9 +196,29 @@ fn handle_request(
                         mcp_tool_error("task is required".to_string())
                     } else {
                         let category = args.get("category").and_then(|v| v.as_str());
+                        let intent = args.get("intent").and_then(|v| v.as_str());
+                        let recall = args
+                            .get("recall")
+                            .and_then(|v| v.as_bool())
+                            .unwrap_or(false);
+                        let verbose = args
+                            .get("verbose")
+                            .and_then(|v| v.as_bool())
+                            .unwrap_or(false);
                         let limit =
                             args.get("limit").and_then(|v| v.as_u64()).unwrap_or(5) as usize;
-                        let advice = crate::advice::advise(reg, memory_home, task, category, limit);
+                        let advice = crate::advice::advise(
+                            reg,
+                            memory_home,
+                            task,
+                            crate::advice::AdviceOptions {
+                                category,
+                                intent,
+                                recall,
+                                verbose,
+                                memory_limit: limit,
+                            },
+                        );
                         mcp_tool_result(
                             serde_json::to_value(advice).unwrap_or_else(|_| serde_json::json!({})),
                         )
@@ -297,7 +326,7 @@ fn handle_request(
             serde_json::json!({
                 "protocolVersion": "2024-11-05",
                 "capabilities": { "tools": {} },
-                "serverInfo": { "name": "tool-first", "version": "0.1.0" }
+                "serverInfo": { "name": "tool-first", "version": env!("CARGO_PKG_VERSION") }
             })
         }
 
@@ -340,7 +369,7 @@ fn mcp_tool_error(message: String) -> Value {
     })
 }
 
-fn doctor(memory_home: &std::path::PathBuf, reg: &registry::Registry) -> Value {
+fn doctor(memory_home: &std::path::Path, reg: &registry::Registry) -> Value {
     let has_marker = resolver::has_marker(memory_home);
     let backend_info = crate::file_store::backend_info(memory_home);
     let conflicts = resolver::detect_memory_homes();

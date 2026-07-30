@@ -71,23 +71,22 @@ Add the Tool-First Rule to your Codex agent configuration:
 ```markdown
 ## Tool-First Rule
 
-Before writing custom scripts, installing new software, or doing file/data
-conversion, extraction, transformation, or batch processing with ad-hoc code,
-check if an existing local tool already solves the problem.
+Do not invoke tool-first at task start. Invoke it only immediately before
+writing incidental code that would reimplement a commodity local operation, or
+before installing a dependency for that operation.
 
-Do not run this gate for ordinary conversation, explanations, code reading,
-planning, code review, repository summaries, or simple inspection commands such
-as `rg`, `sed`, `cat`, `ls`, and `git status`.
+Do not run it for ordinary software development, conversation, explanations,
+planning, code reading/review, repository inspection, or an already-selected tool.
 
-1. **Run the one-step gate first only for in-scope tasks**:
-   `tool-first advise --task "<description>" --json`
+1. For an in-scope operation run:
+   `tool-first advise --task "<operation>" --intent avoid_custom_code --category <category> --json`
 2. If the decision is `use_existing_tool`, use the recommended tool before
    writing custom code.
 3. If the decision is `verify_recalled_recipe`, re-detect the tool and reuse the
    remembered command if still valid.
-4. If `advise` is unavailable or ambiguous, fall back to category -> registry
-   query -> detect -> recall.
-5. **Write code only when** tools are missing, fail, or the task requires custom logic.
+4. Recall tool-memory only when candidates are unavailable or failed.
+5. Write code when the user requested an implementation, custom logic is
+   required, or no suitable mature tool is available.
 
 If writing code, briefly state why: "No existing tool fits because …"
 

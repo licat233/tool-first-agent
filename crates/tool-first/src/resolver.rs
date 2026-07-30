@@ -1,6 +1,6 @@
 use crate::config::Config;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// The canonical `.tool-memory-home` marker filename.
 pub const MARKER_FILENAME: &str = ".tool-memory-home";
@@ -77,12 +77,12 @@ pub fn default_memory_home() -> PathBuf {
 }
 
 /// Return the path to the `.tool-memory-home` marker.
-pub fn marker_path(memory_home: &PathBuf) -> PathBuf {
+pub fn marker_path(memory_home: &Path) -> PathBuf {
     memory_home.join(MARKER_FILENAME)
 }
 
 /// Check whether the `.tool-memory-home` marker exists.
-pub fn has_marker(memory_home: &PathBuf) -> bool {
+pub fn has_marker(memory_home: &Path) -> bool {
     marker_path(memory_home).exists()
 }
 
@@ -121,7 +121,7 @@ fn follow_redirects(mut path: PathBuf) -> PathBuf {
     path
 }
 
-pub fn check_redirect(dir: &PathBuf) -> Option<String> {
+pub fn check_redirect(dir: &Path) -> Option<String> {
     let path = dir.join(".tool-memory-redirect");
     if !path.exists() {
         return None;

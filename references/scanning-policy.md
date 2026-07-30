@@ -37,7 +37,12 @@ Full scans are maintenance operations only.
 ## Trigger Rules
 
 - Agent startup: no scan.
-- First relevant task: scan only that category.
+- Ordinary conversation, explanations, code reading/review, and normal software
+  development: no scan.
+- Before incidental code would reimplement a commodity local operation: scan
+  only that category and at most five candidates.
 - Later tasks: use cache/memory when fresh.
 - Tool failure: re-detect that tool.
 - Tool install/uninstall: run `tool-first tools detect --category <cat>`.
+- Recall tool-memory only after relevant registered candidates are unavailable,
+  or when explicitly requested.

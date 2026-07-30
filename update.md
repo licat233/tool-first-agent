@@ -12,14 +12,14 @@ The update has two parts:
 
 1. `tool-first` CLI recommendation logic was tightened.
    - Normal conversation, explanations, code reading, repository summaries, and
-     simple inspection should return `write_code_or_use_other_skill`.
+     ordinary software development return `not_applicable` without tool
+     detection or tool-memory recall.
    - Real tool tasks such as image resize, format conversion, extraction,
      compression, query, download, OCR, and parsing can still recommend local
      tools.
 2. Agent rule text was narrowed.
-   - The tool-first gate should run only before custom scripts, installing
-     tools, or file/data conversion, extraction, transformation, or batch
-     processing.
+   - The gate runs only before incidental code would reimplement a commodity
+     local operation, or before installing a dependency for that operation.
    - It should not run for normal chat, explanations, planning, code review,
      repository summaries, or simple commands such as `rg`, `sed`, `cat`, `ls`,
      and `git status`.
@@ -53,12 +53,12 @@ Verify:
 ```bash
 tool-first --version
 tool-first advise --task "看一下 README.md 总结项目" --json
-tool-first advise --task "resize png image to 800px" --json
+tool-first advise --task "resize png image to 800px" --intent avoid_custom_code --category image --json
 ```
 
 Expected behavior:
 
-- README summary task: `decision` should be `write_code_or_use_other_skill`.
+- README summary task: `decision` should be `not_applicable`.
 - Image resize task: `decision` should be `use_existing_tool` when `magick` or
   another registered image tool is available.
 
@@ -75,24 +75,23 @@ Update `~/.codex/AGENTS.md` so its Tool-First Rule uses this wording:
 ```markdown
 ## Tool-First Rule
 
-Before writing custom scripts, installing new software, or doing file/data
-conversion, extraction, transformation, or batch processing with ad-hoc code,
-check if an existing local tool already solves the problem.
+Do not invoke tool-first at task start. Invoke it only immediately before
+writing incidental code that would reimplement a commodity local operation, or
+before installing a dependency for that operation.
 
 Do not run this gate for ordinary conversation, explanations, code reading,
 planning, code review, repository summaries, or simple inspection commands such
 as `rg`, `sed`, `cat`, `ls`, and `git status`.
 
-1. **Run the one-step gate first only for in-scope tasks**:
-   `tool-first advise --task "<description>" --json`
+1. For an in-scope operation run:
+   `tool-first advise --task "<operation>" --intent avoid_custom_code --category <category> --json`
 2. If the decision is `use_existing_tool`, use the recommended tool before
    writing custom code.
 3. If the decision is `verify_recalled_recipe`, re-detect the tool and reuse the
    remembered command if still valid.
-4. If `advise` is unavailable or ambiguous, fall back to category -> registry
-   query -> detect -> recall.
-5. **Write code only when** tools are missing, fail, or the task requires custom
-   logic.
+4. Recall tool-memory only when candidates are unavailable or failed.
+5. Write code when explicitly requested, custom logic is required, or no
+   suitable mature tool is available.
 
 If writing code, briefly state why: "No existing tool fits because ..."
 
@@ -143,8 +142,8 @@ If the MCP config points to an old absolute binary path, update it to one of:
 
 ## Do Not
 
-- Do not keep the old broad rule text that says to always run the gate before
-  handling files/data.
+- Do not keep the old broad rule text that runs the gate at task start or for
+  ordinary software development.
 - Do not copy `SKILL.md` into a Vault rule directory as a second source of truth.
 - Do not create a private tool-memory home when `TOOL_FIRST_MEMORY_HOME` exists.
 - Do not treat tool-memory as authoritative long-term memory.

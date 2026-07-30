@@ -58,18 +58,25 @@ tool-first-agent/
 
 ## Core Rule
 
-Before writing custom code for file/data processing or command-line automation:
+Do not invoke tool-first at task start. Invoke it immediately before an agent
+would write incidental code that reimplements a commodity local operation, or
+before installing a tool or dependency for that operation.
 
-1. **Check relevant skills first** — skills encode specialized knowledge, API endpoints, and proven workflows that outperform general-purpose approaches. On Hermes, use `skills_list` and `skill_view`. On Claude Code, skills are listed in the system-reminder's "available skills" section — invoke via the `Skill` tool. Do not perform blind filesystem scans before checking skills.
-2. Run `tool-first advise --task "<description>" --json` as the one-step gate when the task fits the scope above and the CLI is available.
-3. If `advise` is unavailable, classify the task category manually.
-4. **Resolve the shared tool-memory home** — check `TOOL_FIRST_MEMORY_HOME` env var.
-5. Query the registry for candidate tools.
-6. Detect only those candidate tools.
-7. Recall past experience from tool-memory.
-8. Use an existing tool when 1-3 commands can solve the task.
-9. Write code only when tools are missing, fail, or the task requires custom logic.
-10. Record verified success, failure, or unsafe pattern into shared tool-memory.
+1. **Check relevant skills first** — a dedicated skill outranks this general gate.
+2. Skip tool-first for ordinary software development, conversation, explanation,
+   planning, code reading/review, and already-selected tools.
+3. For an in-scope operation, run:
+   `tool-first advise --task "<operation>" --intent avoid_custom_code --category <category> --json`
+4. If the decision is `use_existing_tool`, use it instead of writing incidental code.
+5. If the decision is `verify_recalled_recipe`, re-detect the recalled tool.
+6. If the decision is `known_tool_not_installed`, ask before installing it.
+7. Write code when the task requires custom business logic, the user explicitly
+   requested an implementation, or no suitable mature tool is available.
+8. Record only verified tool success, failure, or unsafe patterns.
+
+The runtime checks the registry and current tool availability first. It recalls
+category-scoped tool-memory only when no registered candidate is currently
+available, or when the caller explicitly passes `--recall`.
 
 Do not perform blind filesystem scans. Do not run `find /`, `find ~`, or scan every
 executable on the machine.
@@ -144,7 +151,7 @@ Build: `cargo build --release`
 
 ```bash
 # Resolve the canonical memory home
-tool-first advise --task "<describe the task>" --json
+tool-first advise --task "<operation>" --intent avoid_custom_code --category image --json
 tool-first memory resolve --json
 
 # Initialize the resolved memory home only after explicit intent
@@ -180,7 +187,7 @@ tool-first mcp serve
 
 | MCP Tool | Description |
 |----------|-------------|
-| `advise_tool_use` | Recommend existing local tools before writing custom code |
+| `advise_tool_use` | Check for a mature tool before incidental code reimplements a commodity operation |
 | `resolve_memory_home` | Resolve the canonical tool-memory home |
 | `query_registry` | Find candidate tools by category/task |
 | `detect_candidates` | Detect which tools are installed |

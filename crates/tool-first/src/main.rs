@@ -33,12 +33,21 @@ enum Commands {
         #[command(subcommand)]
         action: RegistryCommands,
     },
-    /// Recommend existing tools before writing custom code.
+    /// Check for an existing tool before writing incidental custom code.
     Advise {
         #[arg(long)]
         task: String,
         #[arg(long)]
         category: Option<String>,
+        /// Use `avoid_custom_code` when about to reimplement a commodity operation.
+        #[arg(long)]
+        intent: Option<String>,
+        /// Consult relevant tool-memory even when not otherwise necessary.
+        #[arg(long)]
+        recall: bool,
+        /// Include candidates, detections, and recalled records.
+        #[arg(long)]
+        verbose: bool,
         #[arg(long, default_value = "5")]
         limit: usize,
         #[arg(long)]
@@ -148,9 +157,20 @@ fn main() {
         Commands::Advise {
             task,
             category,
+            intent,
+            recall,
+            verbose,
             limit,
             json,
-        } => cmd_advise(&task, category.as_deref(), limit, json),
+        } => cmd_advise(
+            &task,
+            category.as_deref(),
+            intent.as_deref(),
+            recall,
+            verbose,
+            limit,
+            json,
+        ),
         Commands::Registry { action } => match action {
             RegistryCommands::Query {
                 category,
@@ -186,18 +206,33 @@ fn main() {
 fn cmd_advise(
     task: &str,
     category: Option<&str>,
+    intent: Option<&str>,
+    recall: bool,
+    verbose: bool,
     limit: usize,
     json_output: bool,
 ) -> Result<(), String> {
     let cfg = config::load();
     let memory_home = resolver::resolve_memory_home(&cfg);
     let reg = registry::load_registry()?;
-    let advice = advice::advise(&reg, &memory_home, task, category, limit);
+    let advice = advice::advise(
+        &reg,
+        &memory_home,
+        task,
+        advice::AdviceOptions {
+            category,
+            intent,
+            recall,
+            verbose,
+            memory_limit: limit,
+        },
+    );
 
     if json_output {
         println!("{}", serde_json::to_string_pretty(&advice).unwrap());
     } else {
         let rec = &advice.recommendation;
+        println!("applicable: {}", advice.applicable);
         println!("decision: {}", rec.decision);
         println!("tool:     {}", rec.tool.as_deref().unwrap_or("-"));
         println!("category: {}", rec.category.as_deref().unwrap_or("-"));

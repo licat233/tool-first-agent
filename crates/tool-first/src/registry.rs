@@ -32,7 +32,7 @@ pub struct ToolSpec {
 }
 
 /// A matched tool from a registry query.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct MatchedTool {
     pub category: String,
     pub tool: String,

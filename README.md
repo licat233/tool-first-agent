@@ -54,7 +54,7 @@ tool-first-agent = Rust runtime core + SKILL.md rule layer + shared tool-memory
 - Validates `.tool-memory-home` marker
 - Handles `.tool-memory-redirect` for legacy paths
 - Detects multiple memory home conflicts
-- Runs one-step tool-use advice with `tool-first advise`
+- Runs scoped pre-code tool checks with `tool-first advise`
 - Queries `registry/tools.yaml`
 - Detects candidate tools
 - Recalls tool-memory records
@@ -82,22 +82,33 @@ AI agents often write custom scripts when `pandoc`, `jq`, `ffmpeg`, or `magick` 
 5. **Retains new experience** — records successes and failures for future use
 
 ```text
-Before writing code → Load skill → Run `tool-first advise --task "..."` → Use recommended existing tool → Write code only if justified
+Before incidental code reimplements a commodity operation → Run `tool-first advise` → Use a mature installed tool when available
 ```
+
+### v0.3.0: Pre-Code Gate, Not a Task Router
+
+- Ordinary conversation, explanations, code review, and normal software
+  development return `not_applicable` before tool detection or memory access.
+- Explicit requests to implement a script, program, library, API, or application
+  do not trigger tool-first.
+- At most five category-scoped candidates are detected.
+- Tool-memory is recalled only after registered candidates are unavailable, or
+  when `--recall` is explicitly requested.
+- Default CLI and MCP responses are compact; use `--verbose` for diagnostics.
 
 ### Quick Start
 
 ```bash
 # Download pre-built binary (macOS, no Rust required)
-curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.1/tool-first-universal-apple-darwin.tar.gz | tar xz
+curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.3.0/tool-first-universal-apple-darwin.tar.gz | tar xz
 mv tool-first-universal /usr/local/bin/tool-first
 
 # Initialize memory home once, then verify
 tool-first memory init --json
 tool-first doctor
 
-# Ask for tool-first advice before writing code
-tool-first advise --task "extract text from a docx file" --json
+# Check before incidental code reimplements a commodity operation
+tool-first advise --task "extract text from a docx file" --intent avoid_custom_code --category document --json
 
 # Query and detect manually when needed
 tool-first registry query --category document --json
@@ -110,7 +121,7 @@ tool-first tools detect --category document --record --json
 ### CLI Commands
 
 ```bash
-tool-first advise --task <text> --json    # One-step tool-first recommendation
+tool-first advise --task <operation> --intent avoid_custom_code --category <category> --json
 tool-first memory resolve --json          # Resolve canonical memory home
 tool-first memory init --json             # Initialize the chosen memory home after explicit intent
 tool-first memory recall --task <text>    # Search tool-memory
@@ -229,7 +240,7 @@ Repository:
 https://github.com/licat233/tool-first-agent
 
 Current release:
-v0.2.1
+v0.3.0
 
 Supported agents:
 - Codex
@@ -237,18 +248,17 @@ Supported agents:
 - Hermes Agent
 
 Primary goal:
-Make this agent follow the tool-first principle. Before writing custom scripts,
-installing tools, or doing file/data conversion, extraction, transformation, or
-batch processing with ad-hoc code, the agent must first ask `tool-first` whether
-an existing local tool or remembered recipe solves the task.
+Use tool-first as a pre-code gate, not a task router. Invoke it only immediately
+before incidental code would reimplement a commodity local operation, or before
+installing a dependency for that operation.
 
-Do not run the tool-first gate for ordinary conversation, explanations, code
-reading, planning, code review, repository summaries, or simple inspection
-commands such as `rg`, `sed`, `cat`, `ls`, and `git status`.
+Do not run it for ordinary software development, conversation, explanations,
+planning, code reading/review, repository inspection, an already-selected
+tool, or when the user explicitly requested a software implementation.
 
 Required first gate:
 
-  tool-first advise --task "<describe the task>" --json
+  tool-first advise --task "<operation>" --intent avoid_custom_code --category <category> --json
 
 If the decision is `use_existing_tool`, use the recommended tool before writing
 custom code.
@@ -256,12 +266,9 @@ custom code.
 If the decision is `verify_recalled_recipe`, re-detect the tool and reuse the
 remembered command if still valid.
 
-If `advise` is unavailable or ambiguous, fall back to:
-
-  category -> registry query -> detect -> recall
-
-Write custom code only when tools are missing, fail, or the task requires custom
-logic. If writing code, state why: "No existing tool fits because ..."
+Recall tool-memory only after registered candidates are unavailable or failed.
+Write code when explicitly requested, custom logic is required, or no suitable
+mature tool is available.
 
 Architecture rules:
 - `SKILL.md` is the canonical execution rule source.
@@ -283,7 +290,7 @@ Detect the platform:
 For macOS, prefer the universal binary unless the user explicitly wants a
 single-architecture binary:
 
-  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.1/tool-first-universal-apple-darwin.tar.gz | tar xz
+  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.3.0/tool-first-universal-apple-darwin.tar.gz | tar xz
   chmod +x tool-first-universal
 
 Install it as `tool-first`.
@@ -311,11 +318,11 @@ Optional single-architecture downloads:
 
 Apple Silicon only:
 
-  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.1/tool-first-aarch64-apple-darwin.tar.gz | tar xz
+  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.3.0/tool-first-aarch64-apple-darwin.tar.gz | tar xz
 
 Intel only:
 
-  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.1/tool-first-x86_64-apple-darwin.tar.gz | tar xz
+  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.3.0/tool-first-x86_64-apple-darwin.tar.gz | tar xz
 
 If no prebuilt binary matches the platform, build from source:
 
@@ -403,30 +410,30 @@ Initialize the memory home only after the path is confirmed:
 ## Step 4: Add the agent rule
 
 This step is required. Without an agent rule, the binary can be installed but
-the agent may still skip the tool-first gate.
+the agent may invoke the gate too broadly or skip it when about to reinvent a
+commodity operation.
 
 Use this rule text:
 
   ## Tool-First Rule
 
-  Before writing custom scripts, installing tools, or doing file/data
-  conversion, extraction, transformation, or batch processing with ad-hoc code,
-  check whether an existing local tool already solves the problem.
+  Do not invoke tool-first at task start. Invoke it only immediately before
+  writing incidental code that would reimplement a commodity local operation,
+  or before installing a dependency for that operation.
 
-  Do not run this gate for ordinary conversation, explanations, code reading,
-  planning, code review, repository summaries, or simple inspection commands
-  such as rg, sed, cat, ls, and git status.
+  Do not run it for ordinary software development, conversation, explanations,
+  planning, code reading/review, repository inspection, or an already-selected
+  tool.
 
-  1. Run the one-step gate first only for in-scope tasks:
-     tool-first advise --task "<description>" --json
+  1. For an in-scope operation run:
+     tool-first advise --task "<operation>" --intent avoid_custom_code --category <category> --json
   2. If the decision is use_existing_tool, use the recommended tool before
      writing custom code.
   3. If the decision is verify_recalled_recipe, re-detect the tool and reuse the
      remembered command if still valid.
-  4. If advise is unavailable or ambiguous, fall back to category -> registry
-     query -> detect -> recall.
-  5. Write code only when tools are missing, fail, or the task requires custom
-     logic.
+  4. Recall tool-memory only when candidates are unavailable or failed.
+  5. Write code when explicitly requested, custom logic is required, or no
+     suitable mature tool is available.
 
   If writing code, briefly state why: "No existing tool fits because ..."
 
@@ -509,8 +516,8 @@ Run:
 
   tool-first --version
   tool-first doctor
-  tool-first advise --task "extract fields from a json file" --json
-  tool-first advise --task "resize a png image to 800px" --json
+  tool-first advise --task "extract fields from a json file" --intent avoid_custom_code --category data --json
+  tool-first advise --task "resize a png image to 800px" --intent avoid_custom_code --category image --json
 
 Expected behavior:
 - JSON tasks should recommend tools such as `jq` or `yq` when available.
@@ -558,7 +565,7 @@ tool-first-agent/
         ├── config.rs                   # config loading + resolution
         ├── resolver.rs                 # TOOL_FIRST_MEMORY_HOME + markers
         ├── registry.rs                 # registry query
-        ├── advice.rs                   # one-step tool-first recommendation
+        ├── advice.rs                   # scoped pre-code tool recommendation
         ├── detect.rs                   # tool detection
         ├── memory.rs                   # MemoryRecord struct
         ├── file_store.rs               # file-based store (append-only, atomic writes)
@@ -613,22 +620,32 @@ AI 助手经常在 `pandoc`、`jq`、`ffmpeg`、`magick` 等工具一条命令�
 5. **记录新经验** — 保存成功和失败记录供未来使用
 
 ```text
-写代码之前 → 加载技能 → 运行 `tool-first advise --task "..."` → 使用推荐工具 → 只有合理时才写代码
+准备为通用本地操作编写临时代码时 → 运行 tool-first → 优先使用成熟工具
 ```
+
+### v0.3.0：写临时代码前的检查门，而不是任务路由器
+
+- 普通对话、解释、代码审阅和正常软件开发会在探测工具或读取 memory
+  之前返回 `not_applicable`。
+- 用户明确要求实现脚本、程序、库、API 或应用时不触发 tool-first。
+- 每次最多探测五个限定类别的候选工具。
+- 只有候选工具不可用或显式传入 `--recall` 时才查询 tool-memory。
+- CLI 和 MCP 默认返回紧凑结果；诊断明细需显式传入 `--verbose`。
 
 ### 快速开始
 
 ```bash
 # 下载预编译二进制（macOS，无需 Rust 环境）
-curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.2.1/tool-first-universal-apple-darwin.tar.gz | tar xz
+curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.3.0/tool-first-universal-apple-darwin.tar.gz | tar xz
 mv tool-first-universal /usr/local/bin/tool-first
 
 # 初始化 memory home 一次，然后验证
 tool-first memory init --json
 tool-first doctor
 
-# 写代码前先询问工具优先建议
-tool-first advise --task "extract text from a docx file" --json
+# 仅在准备重复实现通用操作时检查已有工具
+tool-first advise --task "extract text from a docx file" \
+  --intent avoid_custom_code --category document --json
 
 # 必要时再手动查询和检测
 tool-first registry query --category document --json
@@ -641,7 +658,7 @@ tool-first tools detect --category document --record --json
 ### CLI 命令
 
 ```bash
-tool-first advise --task <text> --json    # 一步式工具优先建议
+tool-first advise --task <操作> --intent avoid_custom_code --category <类别> --json
 tool-first memory resolve --json          # 解析 canonical memory home
 tool-first memory init --json             # 明确确认后初始化 memory home
 tool-first memory recall --task <text>    # 搜索工具记忆

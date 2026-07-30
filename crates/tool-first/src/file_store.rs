@@ -7,9 +7,8 @@
 use crate::memory::MemoryRecord;
 use crate::resolver;
 use serde::Serialize;
-use serde_json;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
 /// Result of persisting a record.
@@ -61,7 +60,7 @@ pub fn retain(memory_home: &PathBuf, record: &MemoryRecord) -> Result<RetainResu
 
 /// Search records matching a query string.
 pub fn recall(
-    memory_home: &PathBuf,
+    memory_home: &Path,
     query: &str,
     category: Option<&str>,
     limit: usize,
@@ -76,7 +75,7 @@ pub fn recall(
                 r.category.as_deref() == Some(cat)
                     || r.tags
                         .as_ref()
-                        .map_or(false, |t| t.contains(&format!("tool-category-{cat}")))
+                        .is_some_and(|t| t.contains(&format!("tool-category-{cat}")))
             } else {
                 true
             }
@@ -104,16 +103,16 @@ pub fn recall(
 }
 
 /// Get availability records, optionally filtered by tool names.
-pub fn get_availability(memory_home: &PathBuf, tools: Option<&[String]>) -> Vec<MemoryRecord> {
+pub fn get_availability(memory_home: &Path, tools: Option<&[String]>) -> Vec<MemoryRecord> {
     load_all(memory_home)
         .into_iter()
         .filter(|r| r.record_type.as_deref() == Some("availability"))
-        .filter(|r| tools.map_or(true, |ts| r.tool.as_ref().map_or(false, |t| ts.contains(t))))
+        .filter(|r| tools.is_none_or(|ts| r.tool.as_ref().is_some_and(|t| ts.contains(t))))
         .collect()
 }
 
 /// Count records in the store.
-pub fn count(memory_home: &PathBuf) -> usize {
+pub fn count(memory_home: &Path) -> usize {
     let records_dir = memory_home.join("records");
     if !records_dir.exists() {
         return 0;
@@ -123,7 +122,7 @@ pub fn count(memory_home: &PathBuf) -> usize {
             entries
                 .flatten()
                 .filter(|e| {
-                    e.path().extension().map_or(false, |ext| ext == "json")
+                    e.path().extension().is_some_and(|ext| ext == "json")
                         && !e.file_name().to_string_lossy().starts_with(".tmp-")
                 })
                 .count()
@@ -132,7 +131,7 @@ pub fn count(memory_home: &PathBuf) -> usize {
 }
 
 /// Return backend metadata.
-pub fn backend_info(memory_home: &PathBuf) -> serde_json::Value {
+pub fn backend_info(memory_home: &Path) -> serde_json::Value {
     serde_json::json!({
         "adapter": "file",
         "memory_home": memory_home.to_string_lossy(),
@@ -154,7 +153,7 @@ fn generate_filename(record: &MemoryRecord) -> String {
     format!("{ts}-{agent}-{tool}-{rtype}-{uid}.json")
 }
 
-fn load_all(memory_home: &PathBuf) -> Vec<MemoryRecord> {
+fn load_all(memory_home: &Path) -> Vec<MemoryRecord> {
     let records_dir = memory_home.join("records");
     if !records_dir.exists() {
         return Vec::new();
@@ -166,12 +165,12 @@ fn load_all(memory_home: &PathBuf) -> Vec<MemoryRecord> {
     let mut records = Vec::new();
     for entry in entries.flatten() {
         let path = entry.path();
-        if !path.extension().map_or(false, |e| e == "json") {
+        if !path.extension().is_some_and(|e| e == "json") {
             continue;
         }
         if path
             .file_name()
-            .map_or(false, |n| n.to_string_lossy().starts_with(".tmp-"))
+            .is_some_and(|n| n.to_string_lossy().starts_with(".tmp-"))
         {
             continue;
         }

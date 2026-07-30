@@ -1,7 +1,7 @@
 # CLAUDE.md Integration — Tool-First Rule
 
 Add this rule to `~/.claude/CLAUDE.md` so Claude Code checks existing tools
-before writing custom code. Do not install this skill into a project-local
+before incidental code reimplements a commodity operation. Do not install this skill into a project-local
 `.claude/` directory unless the user explicitly asks for a project-specific
 override.
 
@@ -10,18 +10,20 @@ override.
 ```markdown
 ## Tool-First Rule
 
-Before writing custom scripts, installing new software, or handling files/data
-with ad-hoc code, check if an existing local tool already solves the problem.
+Do not invoke tool-first at task start. Invoke it only immediately before
+writing incidental code that would reimplement a commodity local operation, or
+before installing a dependency for that operation. Ordinary software
+development does not trigger this rule.
 
-1. **Run the one-step gate first**:
-   `tool-first advise --task "<description>" --json`
+1. For an in-scope operation run:
+   `tool-first advise --task "<operation>" --intent avoid_custom_code --category <category> --json`
 2. If the decision is `use_existing_tool`, use the recommended tool before
    writing custom code.
 3. If the decision is `verify_recalled_recipe`, re-detect the tool and reuse the
    remembered command if still valid.
-4. If `advise` is unavailable or ambiguous, fall back to category -> registry
-   query -> detect -> recall.
-5. **Write code only when** tools are missing, fail, or the task requires custom logic.
+4. Recall tool-memory only when candidates are unavailable or failed.
+5. Write code when explicitly requested, custom logic is required, or no
+   suitable mature tool is available.
 
 If writing code, briefly state why: "No existing tool fits because …"
 

@@ -1,28 +1,29 @@
 # SOUL.md Integration — Tool-First Rule
 
 Add this rule to `~/.hermes/SOUL.md` so Hermes Agent checks existing tools
-before writing custom code.
+before incidental code reimplements a commodity operation.
 
 ## Recommended Rule Text
 
 ```markdown
 ## Tool-First Rule (G4)
 
-Before writing custom scripts, installing tools, or handling files/data,
-**always check whether an existing local tool already solves the problem.**
+Do not invoke tool-first at task start. Invoke it only immediately before
+writing incidental code that would reimplement a commodity local operation, or
+before installing a dependency for that operation. Ordinary software
+development does not trigger this rule.
 
 1. **Load the `tool-first-agent` skill** — it provides a registry of candidate
    tools, lazy category-based detection, and shared runtime tool-memory.
-2. **Run the one-step gate first**:
-   `tool-first advise --task "<description>" --json`
+2. For an in-scope operation run:
+   `tool-first advise --task "<operation>" --intent avoid_custom_code --category <category> --json`
 3. If the decision is `use_existing_tool`, use the recommended tool before
    writing custom code.
 4. If the decision is `verify_recalled_recipe`, re-detect the tool and reuse the
    remembered command if still valid.
-5. If `advise` is unavailable or ambiguous, fall back to category -> registry
-   query -> detect -> recall.
-6. **Write code only when** tools are missing, fail, or the task requires
-   custom logic.
+5. Recall tool-memory only when candidates are unavailable or failed.
+6. Write code when explicitly requested, custom logic is required, or no
+   suitable mature tool is available.
 
 If writing code, briefly state why: "No existing tool fits because …"
 
