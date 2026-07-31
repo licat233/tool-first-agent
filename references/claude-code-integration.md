@@ -1,4 +1,4 @@
-# CLAUDE.md Integration — Tool-First Rule
+# CLAUDE.md Integration — ToolScout Rule
 
 Add this rule to `~/.claude/CLAUDE.md` so Claude Code checks existing tools
 before incidental code reimplements a commodity operation. Do not install this skill into a project-local
@@ -8,15 +8,15 @@ override.
 ## Recommended Rule Text
 
 ```markdown
-## Tool-First Rule
+## ToolScout Rule
 
-Do not invoke tool-first at task start. Invoke it only immediately before
+Do not invoke toolscout at task start. Invoke it only immediately before
 writing incidental code that would reimplement a commodity local operation, or
 before installing a dependency for that operation. Ordinary software
 development does not trigger this rule.
 
 1. For an in-scope operation run:
-   `tool-first advise --task "<operation>" --intent avoid_custom_code --category <category> --json`
+   `toolscout advise --task "<operation>" --intent avoid_custom_code --category <category> --json`
 2. If the decision is `use_existing_tool`, use the recommended tool before
    writing custom code.
 3. If the decision is `verify_recalled_recipe`, re-detect the tool and reuse the
@@ -28,7 +28,7 @@ development does not trigger this rule.
 If writing code, briefly state why: "No existing tool fits because …"
 
 tool-memory is shared runtime infrastructure, not authoritative Vault memory.
-Do not create private tool-memory when TOOL_FIRST_MEMORY_HOME exists.
+Do not create private tool-memory when TOOLSCOUT_MEMORY_HOME exists.
 Do not default-create 02-Rules/Tool-Inventory.
 SKILL.md is the sole execution rule source.
 ```
@@ -40,28 +40,28 @@ SKILL.md is the sole execution rule source.
 - Claude Code may also read project-local files, but this installer should not
   create project-local `.claude/` files unless explicitly requested.
 - Claude Code skills are listed in the system-reminder's "available skills"
-  section. The `tool-first-agent` skill is invoked via the `Skill` tool.
+  section. The `toolscout` skill is invoked via the `Skill` tool.
 - Without a CLAUDE.md rule, the skill is available but only loaded when
   explicitly requested or when the user's message matches the skill description.
 
 ## Installation
 
 ```bash
-git clone https://github.com/licat233/tool-first-agent.git
-cd tool-first-agent
+git clone https://github.com/licat233/toolscout.git
+cd toolscout
 cargo build --release
-cp target/release/tool-first /usr/local/bin/
+cp target/release/toolscout /usr/local/bin/
 mkdir -p ~/.claude/skills
-git clone https://github.com/licat233/tool-first-agent.git ~/.claude/skills/tool-first-agent
+git clone https://github.com/licat233/toolscout.git ~/.claude/skills/toolscout
 ```
 
 ## Environment Variables
 
 ```bash
-export TOOL_FIRST_MEMORY_HOME="/path/to/tool-memory"
-export TOOL_FIRST_AGENT_NAME="claude-code"
+export TOOLSCOUT_MEMORY_HOME="/path/to/tool-memory"
+export TOOLSCOUT_AGENT_NAME="claude-code"
 
 # For macOS GUI apps:
-launchctl setenv TOOL_FIRST_MEMORY_HOME "/path/to/tool-memory"
-launchctl setenv TOOL_FIRST_AGENT_NAME "claude-code"
+launchctl setenv TOOLSCOUT_MEMORY_HOME "/path/to/tool-memory"
+launchctl setenv TOOLSCOUT_AGENT_NAME "claude-code"
 ```

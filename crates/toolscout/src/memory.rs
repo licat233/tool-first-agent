@@ -52,7 +52,7 @@ impl MemoryRecord {
         }
         if self.source_agent.is_none() {
             let agent =
-                std::env::var("TOOL_FIRST_AGENT_NAME").unwrap_or_else(|_| "unknown".to_string());
+                std::env::var("TOOLSCOUT_AGENT_NAME").unwrap_or_else(|_| "unknown".to_string());
             self.source_agent = Some(agent);
         }
         if self.namespace.is_none() {

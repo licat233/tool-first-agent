@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-/// Loaded from `~/.config/tool-first-agent/config.yaml`
-/// or overridden by TOOL_FIRST_MEMORY_CONFIG.
+/// Loaded from `~/.config/toolscout/config.yaml`
+/// or overridden by TOOLSCOUT_MEMORY_CONFIG.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Config {
     pub memory_home: Option<String>,
@@ -41,17 +41,17 @@ pub fn load() -> Config {
 }
 
 /// Search priority for config file:
-///   1. TOOL_FIRST_MEMORY_CONFIG env
+///   1. TOOLSCOUT_MEMORY_CONFIG env
 ///   2. ./memory_config.yaml  (next to binary / project root)
-///   3. ~/.config/tool-first-agent/config.yaml
-///   4. ~/.config/tool-first-agent/memory_config.yaml
+///   3. ~/.config/toolscout/config.yaml
+///   4. ~/.config/toolscout/memory_config.yaml
 pub fn allow_create_new_home(cfg: &Config) -> bool {
     cfg.write_policy.allow_create_new_home.unwrap_or(true)
 }
 
 pub fn find_config_path() -> Option<PathBuf> {
     // 1. env override
-    if let Ok(env_path) = std::env::var("TOOL_FIRST_MEMORY_CONFIG") {
+    if let Ok(env_path) = std::env::var("TOOLSCOUT_MEMORY_CONFIG") {
         let p = PathBuf::from(shellexpand(&env_path));
         if p.is_file() {
             return Some(p);
@@ -66,22 +66,20 @@ pub fn find_config_path() -> Option<PathBuf> {
         }
         let p2 = cwd
             .join("crates")
-            .join("tool-first")
+            .join("toolscout")
             .join("memory_config.yaml");
         if p2.is_file() {
             return Some(p2);
         }
     }
 
-    // 3. ~/.config/tool-first-agent/config.yaml
+    // 3. ~/.config/toolscout/config.yaml
     if let Some(config_dir) = dirs::config_dir() {
-        let p = config_dir.join("tool-first-agent").join("config.yaml");
+        let p = config_dir.join("toolscout").join("config.yaml");
         if p.is_file() {
             return Some(p);
         }
-        let p2 = config_dir
-            .join("tool-first-agent")
-            .join("memory_config.yaml");
+        let p2 = config_dir.join("toolscout").join("memory_config.yaml");
         if p2.is_file() {
             return Some(p2);
         }
@@ -90,9 +88,9 @@ pub fn find_config_path() -> Option<PathBuf> {
     // 4. Agent skill dirs
     if let Some(home) = dirs::home_dir() {
         let candidates = [
-            home.join(".hermes/skills/devops/tool-first-agent/memory_config.yaml"),
-            home.join(".claude/skills/tool-first-agent/memory_config.yaml"),
-            home.join(".codex/skills/tool-first-agent/memory_config.yaml"),
+            home.join(".hermes/skills/devops/toolscout/memory_config.yaml"),
+            home.join(".claude/skills/toolscout/memory_config.yaml"),
+            home.join(".codex/skills/toolscout/memory_config.yaml"),
         ];
         for c in &candidates {
             if c.is_file() {

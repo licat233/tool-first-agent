@@ -17,20 +17,20 @@ canonical shared file-based runtime tool-memory home.
 
 | Option | Path | Best for |
 |--------|------|----------|
-| Vault-external | `~/AI-Runtime/tool-first-agent/tool-memory` | Clean vault |
+| Vault-external | `~/AI-Runtime/toolscout/tool-memory` | Clean vault |
 | ARMOR Vault | `<ARMORVault>/92-Logs/_shared/tool-memory/` | Multi-agent ARMOR |
 | PAMA Vault | `<PAMAVault>/08-Working-Memory/_runtime/tool-memory/` | Personal PAMA |
 
 Do **not** choose high-authority paths (`01-Facts/`, `02-Rules/`, `03-Insights/`, `05-Truth/`).
 
-## Step 2: Set TOOL_FIRST_MEMORY_HOME
+## Step 2: Set TOOLSCOUT_MEMORY_HOME
 
 ```bash
 # In your shell profile (~/.zshrc, ~/.bashrc, etc.)
-export TOOL_FIRST_MEMORY_HOME="/path/to/chosen/tool-memory"
+export TOOLSCOUT_MEMORY_HOME="/path/to/chosen/tool-memory"
 
 # For macOS GUI apps:
-launchctl setenv TOOL_FIRST_MEMORY_HOME "/path/to/chosen/tool-memory"
+launchctl setenv TOOLSCOUT_MEMORY_HOME "/path/to/chosen/tool-memory"
 ```
 
 ## Step 3: Detect Old Memory Homes
@@ -51,17 +51,17 @@ ls ~/.hermes/tool-memory/ 2>/dev/null
 Or use the built-in conflict detector:
 
 ```bash
-tool-first memory check-conflicts --json
+toolscout memory check-conflicts --json
 ```
 
 ## Step 4: Merge Records
 
 ```bash
-mkdir -p "$TOOL_FIRST_MEMORY_HOME/records"
+mkdir -p "$TOOLSCOUT_MEMORY_HOME/records"
 
 # Copy from old file-based path
 cp ~/.config/tool-inventory/memory/records/*.json \
-   "$TOOL_FIRST_MEMORY_HOME/records/" 2>/dev/null
+   "$TOOLSCOUT_MEMORY_HOME/records/" 2>/dev/null
 ```
 
 ## Step 5: Place Redirect Markers
@@ -71,7 +71,7 @@ OLD_PATH="$HOME/.config/tool-inventory/memory"
 mkdir -p "$OLD_PATH"
 cat > "$OLD_PATH/.tool-memory-redirect" <<EOF
 {
-  "redirect_to": "$TOOL_FIRST_MEMORY_HOME",
+  "redirect_to": "$TOOLSCOUT_MEMORY_HOME",
   "reason": "Canonical tool-memory home moved to shared runtime-infrastructure path.",
   "do_not_write_here": true
 }
@@ -82,7 +82,7 @@ Repeat for each old path.
 
 ## Step 6: Update Config
 
-Update `~/.config/tool-first-agent/config.yaml`:
+Update `~/.config/toolscout/config.yaml`:
 
 ```yaml
 memory_home: "/path/to/chosen/tool-memory"
@@ -98,11 +98,11 @@ write_policy:
 ## Step 7: Rebuild and Verify
 
 ```bash
-cd tool-first-agent
+cd toolscout
 cargo build --release
 
-tool-first doctor
-tool-first memory check-conflicts --json
+toolscout doctor
+toolscout memory check-conflicts --json
 ```
 
 ## Migration Rules

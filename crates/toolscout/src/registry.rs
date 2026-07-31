@@ -88,7 +88,7 @@ fn find_registry() -> Result<PathBuf, String> {
     if let Ok(cwd) = std::env::current_dir() {
         let candidates = [
             cwd.join("registry/tools.yaml"),
-            cwd.join("crates/tool-first/registry/tools.yaml"),
+            cwd.join("crates/toolscout/registry/tools.yaml"),
             cwd.join("../registry/tools.yaml"),
         ];
         for c in &candidates {

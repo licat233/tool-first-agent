@@ -495,7 +495,7 @@ mod tests {
     fn explicit_category_checks_a_commodity_operation() {
         let registry = registry_with_tool("dev", "sh", &["Run shell commands"]);
         let memory_home =
-            std::env::temp_dir().join(format!("tool-first-advice-test-{}", uuid::Uuid::new_v4()));
+            std::env::temp_dir().join(format!("toolscout-advice-test-{}", uuid::Uuid::new_v4()));
         let advice = advise(
             &registry,
             &memory_home,
@@ -516,7 +516,7 @@ mod tests {
     fn chinese_image_conversion_is_in_scope() {
         let registry = registry_with_tool("image", "sips", &["Convert and resize images"]);
         let memory_home =
-            std::env::temp_dir().join(format!("tool-first-advice-test-{}", uuid::Uuid::new_v4()));
+            std::env::temp_dir().join(format!("toolscout-advice-test-{}", uuid::Uuid::new_v4()));
         let advice = advise(
             &registry,
             &memory_home,
@@ -536,7 +536,7 @@ mod tests {
     fn verbose_mode_includes_bounded_details() {
         let registry = registry_with_tool("dev", "sh", &["Run shell commands"]);
         let memory_home =
-            std::env::temp_dir().join(format!("tool-first-advice-test-{}", uuid::Uuid::new_v4()));
+            std::env::temp_dir().join(format!("toolscout-advice-test-{}", uuid::Uuid::new_v4()));
         let advice = advise(
             &registry,
             &memory_home,

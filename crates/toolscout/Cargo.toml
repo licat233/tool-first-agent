@@ -1,12 +1,12 @@
 [package]
-name = "tool-first"
-version = "0.3.1"
+name = "toolscout"
+version = "1.0.0"
 edition = "2021"
-description = "Fast local runtime core for tool-first-agent — CLI + MCP for shared file-based tool-memory, registry query, and tool detection."
+description = "Fast local runtime core for ToolScout — CLI + MCP for shared file-based tool-memory, registry query, and tool detection."
 license = "MIT"
 
 [[bin]]
-name = "tool-first"
+name = "toolscout"
 path = "src/main.rs"
 
 [dependencies]

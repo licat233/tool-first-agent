@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1400" height="2020" viewBox="0 0 1400 2020" role="img" aria-labelledby="title desc">
-  <title id="title">tool-first-agent workflow and architecture</title>
-  <desc id="desc">Readable workflow and architecture diagram for tool-first-agent.</desc>
+  <title id="title">toolscout workflow and architecture</title>
+  <desc id="desc">Readable workflow and architecture diagram for ToolScout.</desc>
   <defs>
     <style>
       .bg { fill: #f7f9fc; }
@@ -39,11 +39,11 @@
 
   <rect class="bg" width="1400" height="2020"/>
 
-  <text class="title" x="80" y="86">tool-first-agent 工作流与架构</text>
+  <text class="title" x="80" y="86">toolscout 工作流与架构</text>
   <text class="subtitle" x="82" y="128">AI Agent 写脚本前的工具优先门卫：先查成熟工具和历史经验，能用现成工具就不要造轮子。</text>
   <rect class="pill" x="80" y="166" width="258" height="38"/>
   <text class="pillText" x="104" y="191">Core command</text>
-  <text class="mono" x="365" y="192">tool-first advise --task "&lt;description&gt;" --json</text>
+  <text class="mono" x="365" y="192">toolscout advise --task "&lt;description&gt;" --json</text>
 
   <text class="section" x="80" y="278">1. Agent 的工作流</text>
 
@@ -53,8 +53,8 @@
   <text class="body" x="122" y="452">搜索 / 压缩 / 开发工具</text>
 
   <rect class="gate" filter="url(#shadow)" x="520" y="314" width="360" height="176"/>
-  <text class="label" x="562" y="370">Tool-First Gate</text>
-  <text class="body" x="562" y="412">写代码前先问 tool-first</text>
+  <text class="label" x="562" y="370">ToolScout Gate</text>
+  <text class="body" x="562" y="412">写代码前先问 toolscout</text>
   <text class="mono" x="562" y="450">advise --task ... --json</text>
 
   <rect class="signals" filter="url(#shadow)" x="960" y="286" width="360" height="232"/>

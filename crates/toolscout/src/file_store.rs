@@ -22,7 +22,7 @@ pub struct RetainResult {
 pub fn ensure_ready(memory_home: &PathBuf, allow_create_new_home: bool) -> Result<(), String> {
     if !memory_home.exists() && !allow_create_new_home {
         return Err(format!(
-            "Memory home does not exist and write_policy.allow_create_new_home is false: {}. Run `tool-first memory init` after confirming this path is intended.",
+            "Memory home does not exist and write_policy.allow_create_new_home is false: {}. Run `toolscout memory init` after confirming this path is intended.",
             memory_home.display()
         ));
     }
@@ -138,7 +138,7 @@ pub fn backend_info(memory_home: &Path) -> serde_json::Value {
         "records_dir": memory_home.join("records").to_string_lossy(),
         "record_count": count(memory_home),
         "availability_count": get_availability(memory_home, None).len(),
-        "TOOL_FIRST_MEMORY_HOME": std::env::var("TOOL_FIRST_MEMORY_HOME").unwrap_or_else(|_| "(not set)".to_string()),
+        "TOOLSCOUT_MEMORY_HOME": std::env::var("TOOLSCOUT_MEMORY_HOME").unwrap_or_else(|_| "(not set)".to_string()),
     })
 }
 
@@ -261,7 +261,7 @@ mod tests {
 
     fn temp_memory_home(name: &str) -> PathBuf {
         std::env::temp_dir().join(format!(
-            "tool-first-file-store-test-{name}-{}",
+            "toolscout-file-store-test-{name}-{}",
             uuid::Uuid::new_v4()
         ))
     }

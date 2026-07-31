@@ -1,6 +1,6 @@
 <div align="center">
 
-# tool-first-agent
+# toolscout
 
 **Rust runtime core + SKILL.md rule layer + shared tool-memory**
 
@@ -24,17 +24,17 @@
 
 ### Workflow & Architecture
 
-![tool-first-agent workflow and architecture](assets/tool-first-agent-flow.svg)
+![toolscout workflow and architecture](assets/toolscout-flow.svg)
 
 ### Architecture
 
 ```text
-tool-first-agent = Rust runtime core + SKILL.md rule layer + shared tool-memory
+toolscout = Rust runtime core + SKILL.md rule layer + shared tool-memory
 ```
 
 - `SKILL.md` is the canonical execution rule source for agents.
 - The Rust runtime core provides fast local CLI and MCP access.
-- `tool-memory` is shared runtime infrastructure resolved by `TOOL_FIRST_MEMORY_HOME`.
+- `tool-memory` is shared runtime infrastructure resolved by `TOOLSCOUT_MEMORY_HOME`.
 - `tool-memory` is not authoritative Vault memory and must not be promoted into high-authority memory automatically.
 
 ### Three-Layer Design
@@ -43,18 +43,18 @@ tool-first-agent = Rust runtime core + SKILL.md rule layer + shared tool-memory
 |-------|---------------|
 | **SKILL.md** | "How the agent should behave" — sole execution rule source |
 | **Rust runtime core** | "Fast, stable queries and writes" — CLI / MCP / registry / detection / memory |
-| **shared tool-memory** | "Multi-agent tool experience" — resolved by `TOOL_FIRST_MEMORY_HOME` |
+| **shared tool-memory** | "Multi-agent tool experience" — resolved by `TOOLSCOUT_MEMORY_HOME` |
 
-**Do not default-create `02-Rules/Tool-Inventory`.** The executable tool-first behavior belongs in `SKILL.md`. A Vault rule may optionally contain a short reference pointing to `SKILL.md`, but must not duplicate the full tool-first rules.
+**Do not default-create `02-Rules/Tool-Inventory`.** The executable toolscout behavior belongs in `SKILL.md`. A Vault rule may optionally contain a short reference pointing to `SKILL.md`, but must not duplicate the full toolscout rules.
 
 ### What the Rust Core Does
 
-- Reads `TOOL_FIRST_MEMORY_HOME`
-- Parses `~/.config/tool-first-agent/config.yaml`
+- Reads `TOOLSCOUT_MEMORY_HOME`
+- Parses `~/.config/toolscout/config.yaml`
 - Validates `.tool-memory-home` marker
 - Handles `.tool-memory-redirect` for legacy paths
 - Detects multiple memory home conflicts
-- Runs scoped pre-code tool checks with `tool-first advise`
+- Runs scoped pre-code tool checks with `toolscout advise`
 - Queries `registry/tools.yaml`
 - Detects candidate tools
 - Recalls tool-memory records
@@ -82,7 +82,7 @@ AI agents often write custom scripts when `pandoc`, `jq`, `ffmpeg`, or `magick` 
 5. **Retains new experience** — records successes and failures for future use
 
 ```text
-Before incidental code reimplements a commodity operation → Run `tool-first advise` → Use a mature installed tool when available
+Before incidental code reimplements a commodity operation → Run `toolscout advise` → Use a mature installed tool when available
 ```
 
 ### v0.3.0: Pre-Code Gate, Not a Task Router
@@ -90,35 +90,36 @@ Before incidental code reimplements a commodity operation → Run `tool-first ad
 - Ordinary conversation, explanations, code review, and normal software
   development return `not_applicable` before tool detection or memory access.
 - Explicit requests to implement a script, program, library, API, or application
-  do not trigger tool-first.
+  do not trigger toolscout.
 - At most five category-scoped candidates are detected.
 - Tool-memory is recalled only after registered candidates are unavailable, or
   when `--recall` is explicitly requested.
 - Default CLI and MCP responses are compact; use `--verbose` for diagnostics.
 
-### v0.3.1: Standalone Binary Fix
+### v1.0.0: ToolScout Rebrand
 
-- Embeds the default tool registry in the executable, so downloaded binaries
-  work outside the source repository without a separate `registry/tools.yaml`.
+- Renames the project, CLI, MCP server, configuration, and runtime environment
+  to ToolScout. This is a clean break: no legacy command or compatibility alias
+  is retained.
 
 ### Quick Start
 
 ```bash
 # Download pre-built binary (macOS, no Rust required)
-curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.3.1/tool-first-universal-apple-darwin.tar.gz | tar xz
-mv tool-first-universal /usr/local/bin/tool-first
+curl -sL https://github.com/licat233/toolscout/releases/download/v1.0.0/toolscout-universal-apple-darwin.tar.gz | tar xz
+mv toolscout-universal /usr/local/bin/toolscout
 
 # Initialize memory home once, then verify
-tool-first memory init --json
-tool-first doctor
+toolscout memory init --json
+toolscout doctor
 
 # Check before incidental code reimplements a commodity operation
-tool-first advise --task "extract text from a docx file" --intent avoid_custom_code --category document --json
+toolscout advise --task "extract text from a docx file" --intent avoid_custom_code --category document --json
 
 # Query and detect manually when needed
-tool-first registry query --category document --json
-tool-first tools detect --category document --json
-tool-first tools detect --category document --record --json
+toolscout registry query --category document --json
+toolscout tools detect --category document --json
+toolscout tools detect --category document --record --json
 ```
 
 > Linux users: build from source with `cargo build --release` (requires Rust 1.75+).
@@ -126,18 +127,18 @@ tool-first tools detect --category document --record --json
 ### CLI Commands
 
 ```bash
-tool-first advise --task <operation> --intent avoid_custom_code --category <category> --json
-tool-first memory resolve --json          # Resolve canonical memory home
-tool-first memory init --json             # Initialize the chosen memory home after explicit intent
-tool-first memory recall --task <text>    # Search tool-memory
-tool-first memory record '<json>' --json  # Persist a record
-tool-first memory check-conflicts --json  # Check for path conflicts
-tool-first registry query --category <c>  # Query registry by category
-tool-first registry query --task <text>   # Query registry by task
-tool-first tools detect --category <c>    # Detect installed tools
-tool-first tools detect --category <c> --record  # Persist availability records
-tool-first doctor                          # Run diagnostics
-tool-first mcp serve                       # Start MCP stdio server
+toolscout advise --task <operation> --intent avoid_custom_code --category <category> --json
+toolscout memory resolve --json          # Resolve canonical memory home
+toolscout memory init --json             # Initialize the chosen memory home after explicit intent
+toolscout memory recall --task <text>    # Search tool-memory
+toolscout memory record '<json>' --json  # Persist a record
+toolscout memory check-conflicts --json  # Check for path conflicts
+toolscout registry query --category <c>  # Query registry by category
+toolscout registry query --task <text>   # Query registry by task
+toolscout tools detect --category <c>    # Detect installed tools
+toolscout tools detect --category <c> --record  # Persist availability records
+toolscout doctor                          # Run diagnostics
+toolscout mcp serve                       # Start MCP stdio server
 ```
 
 ### MCP Server
@@ -145,7 +146,7 @@ tool-first mcp serve                       # Start MCP stdio server
 Start the MCP server for agent integration:
 
 ```bash
-tool-first mcp serve
+toolscout mcp serve
 ```
 
 This exposes `advise_tool_use`, `resolve_memory_home`, `query_registry`,
@@ -158,9 +159,9 @@ See [`references/mcp-integration.md`](references/mcp-integration.md) for Hermes 
 
 | Agent | Config File | Skill Directory |
 |-------|-------------|-----------------|
-| **Hermes Agent** | `~/.hermes/SOUL.md` | `~/.hermes/skills/devops/tool-first-agent/` |
-| **Claude Code** | `~/.claude/CLAUDE.md` | `~/.claude/skills/tool-first-agent/` |
-| **Codex** | `~/.codex/AGENTS.md` | `~/.codex/skills/tool-first-agent/` |
+| **Hermes Agent** | `~/.hermes/SOUL.md` | `~/.hermes/skills/devops/toolscout/` |
+| **Claude Code** | `~/.claude/CLAUDE.md` | `~/.claude/skills/toolscout/` |
+| **Codex** | `~/.codex/AGENTS.md` | `~/.codex/skills/toolscout/` |
 
 See [`update.md`](update.md) for cross-agent update instructions.
 
@@ -180,7 +181,7 @@ The file adapter stores each tool-memory record as an individual JSON file:
 - Zero dependencies, fully inspectable, Git-friendly
 - Filename: `{timestamp}-{agent}-{tool}-{task}-{uuid}.json`
 
-Obsidian users should point `TOOL_FIRST_MEMORY_HOME` to a low-authority runtime path inside their vault (e.g. `<Vault>/92-Logs/_shared/tool-memory/`).
+Obsidian users should point `TOOLSCOUT_MEMORY_HOME` to a low-authority runtime path inside their vault (e.g. `<Vault>/92-Logs/_shared/tool-memory/`).
 
 ### Registry
 
@@ -205,10 +206,10 @@ document:
 
 ### Configuration
 
-`~/.config/tool-first-agent/config.yaml`:
+`~/.config/toolscout/config.yaml`:
 
 ```yaml
-memory_home: "~/.config/tool-first-agent/tool-memory"
+memory_home: "~/.config/toolscout/tool-memory"
 canonical: true
 authority: "runtime-infrastructure"
 
@@ -222,30 +223,30 @@ write_policy:
 
 | Variable | Purpose |
 |----------|---------|
-| `TOOL_FIRST_MEMORY_HOME` | Canonical shared runtime tool-memory home (highest priority) |
-| `TOOL_FIRST_MEMORY_CONFIG` | Override config file location |
-| `TOOL_FIRST_AGENT_NAME` | Agent name for records (`hermes`, `claude-code`, `codex`) |
+| `TOOLSCOUT_MEMORY_HOME` | Canonical shared runtime tool-memory home (highest priority) |
+| `TOOLSCOUT_MEMORY_CONFIG` | Override config file location |
+| `TOOLSCOUT_AGENT_NAME` | Agent name for records (`hermes`, `claude-code`, `codex`) |
 
 macOS GUI apps may not inherit shell env vars. Use `launchctl setenv`:
 
 ```bash
-launchctl setenv TOOL_FIRST_MEMORY_HOME "/path/to/tool-memory"
+launchctl setenv TOOLSCOUT_MEMORY_HOME "/path/to/tool-memory"
 ```
 
 ### Agent Installation Tutorial
 
 Paste the following tutorial into Codex, Hermes Agent, or Claude Code. It tells
-the agent how to install `tool-first-agent`, configure itself, and verify that
-the tool-first gate is actually being used.
+the agent how to install `toolscout`, configure itself, and verify that
+the toolscout gate is actually being used.
 
 ````text
-You are installing and configuring `tool-first-agent` for this local AI agent.
+You are installing and configuring `toolscout` for this local AI agent.
 
 Repository:
-https://github.com/licat233/tool-first-agent
+https://github.com/licat233/toolscout
 
 Current release:
-v0.3.1
+v1.0.0
 
 Supported agents:
 - Codex
@@ -253,7 +254,7 @@ Supported agents:
 - Hermes Agent
 
 Primary goal:
-Use tool-first as a pre-code gate, not a task router. Invoke it only immediately
+Use toolscout as a pre-code gate, not a task router. Invoke it only immediately
 before incidental code would reimplement a commodity local operation, or before
 installing a dependency for that operation.
 
@@ -263,7 +264,7 @@ tool, or when the user explicitly requested a software implementation.
 
 Required first gate:
 
-  tool-first advise --task "<operation>" --intent avoid_custom_code --category <category> --json
+  toolscout advise --task "<operation>" --intent avoid_custom_code --category <category> --json
 
 If the decision is `use_existing_tool`, use the recommended tool before writing
 custom code.
@@ -280,12 +281,12 @@ Architecture rules:
 - `tool-memory` is shared runtime infrastructure.
 - `tool-memory` is not current truth, not authoritative Vault memory, and not a
   replacement for AI memory governance.
-- Do not create private tool-memory when `TOOL_FIRST_MEMORY_HOME` exists.
+- Do not create private tool-memory when `TOOLSCOUT_MEMORY_HOME` exists.
 - Do not copy the full rules into high-authority Vault paths such as
   `01-Facts/`, `02-Rules/`, `03-Insights/`, or `05-Truth/`.
 - Do not write guessed or hallucinated records into tool-memory.
 
-## Step 1: Install the `tool-first` binary
+## Step 1: Install the `toolscout` binary
 
 Detect the platform:
 
@@ -295,52 +296,52 @@ Detect the platform:
 For macOS, prefer the universal binary unless the user explicitly wants a
 single-architecture binary:
 
-  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.3.1/tool-first-universal-apple-darwin.tar.gz | tar xz
-  chmod +x tool-first-universal
+  curl -sL https://github.com/licat233/toolscout/releases/download/v1.0.0/toolscout-universal-apple-darwin.tar.gz | tar xz
+  chmod +x toolscout-universal
 
-Install it as `tool-first`.
+Install it as `toolscout`.
 
 Preferred install path:
 
-  /usr/local/bin/tool-first
+  /usr/local/bin/toolscout
 
 If `/usr/local/bin` requires approval or is not writable, ask the user before
 using elevated permissions. If the user does not want a system install, install
 to:
 
-  ~/.local/bin/tool-first
+  ~/.local/bin/toolscout
 
 and make sure `~/.local/bin` is on PATH.
 
 Commands:
 
-  mv tool-first-universal tool-first
+  mv toolscout-universal toolscout
   mkdir -p ~/.local/bin
-  mv tool-first ~/.local/bin/tool-first
-  tool-first --version
+  mv toolscout ~/.local/bin/toolscout
+  toolscout --version
 
 Optional single-architecture downloads:
 
 Apple Silicon only:
 
-  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.3.1/tool-first-aarch64-apple-darwin.tar.gz | tar xz
+  curl -sL https://github.com/licat233/toolscout/releases/download/v1.0.0/toolscout-aarch64-apple-darwin.tar.gz | tar xz
 
 Intel only:
 
-  curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.3.1/tool-first-x86_64-apple-darwin.tar.gz | tar xz
+  curl -sL https://github.com/licat233/toolscout/releases/download/v1.0.0/toolscout-x86_64-apple-darwin.tar.gz | tar xz
 
 If no prebuilt binary matches the platform, build from source:
 
-  git clone https://github.com/licat233/tool-first-agent.git
-  cd tool-first-agent
+  git clone https://github.com/licat233/toolscout.git
+  cd toolscout
   cargo build --release
-  cp target/release/tool-first ~/.local/bin/tool-first
+  cp target/release/toolscout ~/.local/bin/toolscout
 
 ## Step 2: Install the skill files
 
 Install the repository into the current agent's skill directory.
 
-The `tool-first` binary may be installed globally in PATH. Claude Code skill
+The `toolscout` binary may be installed globally in PATH. Claude Code skill
 files should be installed under `~/.claude/` by default; do not install them
 into the current project unless the user explicitly asks for a project-local
 override.
@@ -348,69 +349,69 @@ override.
 Codex:
 
   mkdir -p ~/.codex/skills
-  git clone https://github.com/licat233/tool-first-agent.git ~/.codex/skills/tool-first-agent
+  git clone https://github.com/licat233/toolscout.git ~/.codex/skills/toolscout
 
 Claude Code:
 
   mkdir -p ~/.claude/skills
-  git clone https://github.com/licat233/tool-first-agent.git ~/.claude/skills/tool-first-agent
+  git clone https://github.com/licat233/toolscout.git ~/.claude/skills/toolscout
 
 Hermes Agent:
 
   mkdir -p ~/.hermes/skills/devops
-  git clone https://github.com/licat233/tool-first-agent.git ~/.hermes/skills/devops/tool-first-agent
+  git clone https://github.com/licat233/toolscout.git ~/.hermes/skills/devops/toolscout
 
 If the directory already exists, update it instead of cloning again:
 
-  git -C <skill-directory>/tool-first-agent pull
+  git -C <skill-directory>/toolscout pull
 
 ## Step 3: Configure shared tool-memory
 
 First check whether the user already has a canonical memory home:
 
-  echo "$TOOL_FIRST_MEMORY_HOME"
-  tool-first memory resolve --json
+  echo "$TOOLSCOUT_MEMORY_HOME"
+  toolscout memory resolve --json
 
-If `TOOL_FIRST_MEMORY_HOME` is already set, use it. Do not create another
+If `TOOLSCOUT_MEMORY_HOME` is already set, use it. Do not create another
 private memory home.
 
 If it is not set, ask the user where shared tool-memory should live. Recommend a
 low-authority runtime path, for example:
 
-  ~/AI-Runtime/tool-first-agent/tool-memory
+  ~/AI-Runtime/toolscout/tool-memory
   <Vault>/92-Logs/_shared/tool-memory
   <Vault>/08-Working-Memory/_runtime/tool-memory
 
 After the user confirms the path, set it for shells:
 
-  export TOOL_FIRST_MEMORY_HOME="<confirmed-path>"
+  export TOOLSCOUT_MEMORY_HOME="<confirmed-path>"
 
 For macOS GUI apps, also set launchd environment variables:
 
-  launchctl setenv TOOL_FIRST_MEMORY_HOME "<confirmed-path>"
+  launchctl setenv TOOLSCOUT_MEMORY_HOME "<confirmed-path>"
 
 Set the agent name:
 
 Codex:
 
-  export TOOL_FIRST_AGENT_NAME="codex"
-  launchctl setenv TOOL_FIRST_AGENT_NAME "codex"
+  export TOOLSCOUT_AGENT_NAME="codex"
+  launchctl setenv TOOLSCOUT_AGENT_NAME "codex"
 
 Claude Code:
 
-  export TOOL_FIRST_AGENT_NAME="claude-code"
-  launchctl setenv TOOL_FIRST_AGENT_NAME "claude-code"
+  export TOOLSCOUT_AGENT_NAME="claude-code"
+  launchctl setenv TOOLSCOUT_AGENT_NAME "claude-code"
 
 Hermes:
 
-  export TOOL_FIRST_AGENT_NAME="hermes"
-  launchctl setenv TOOL_FIRST_AGENT_NAME "hermes"
+  export TOOLSCOUT_AGENT_NAME="hermes"
+  launchctl setenv TOOLSCOUT_AGENT_NAME "hermes"
 
 Initialize the memory home only after the path is confirmed:
 
-  tool-first memory init --json
-  tool-first doctor
-  tool-first memory check-conflicts --json
+  toolscout memory init --json
+  toolscout doctor
+  toolscout memory check-conflicts --json
 
 ## Step 4: Add the agent rule
 
@@ -420,9 +421,9 @@ commodity operation.
 
 Use this rule text:
 
-  ## Tool-First Rule
+  ## ToolScout Rule
 
-  Do not invoke tool-first at task start. Invoke it only immediately before
+  Do not invoke toolscout at task start. Invoke it only immediately before
   writing incidental code that would reimplement a commodity local operation,
   or before installing a dependency for that operation.
 
@@ -431,7 +432,7 @@ Use this rule text:
   tool.
 
   1. For an in-scope operation run:
-     tool-first advise --task "<operation>" --intent avoid_custom_code --category <category> --json
+     toolscout advise --task "<operation>" --intent avoid_custom_code --category <category> --json
   2. If the decision is use_existing_tool, use the recommended tool before
      writing custom code.
   3. If the decision is verify_recalled_recipe, re-detect the tool and reuse the
@@ -443,7 +444,7 @@ Use this rule text:
   If writing code, briefly state why: "No existing tool fits because ..."
 
   tool-memory is shared runtime infrastructure, not authoritative memory.
-  Do not create private tool-memory when TOOL_FIRST_MEMORY_HOME exists.
+  Do not create private tool-memory when TOOLSCOUT_MEMORY_HOME exists.
   Do not write guessed tool-memory records.
   SKILL.md is the sole execution rule source.
 
@@ -464,7 +465,7 @@ Hermes Agent:
 ## Step 5: Configure MCP when supported
 
 MCP is the recommended integration for all three agents. It lets each agent
-declare its own `TOOL_FIRST_AGENT_NAME` in the MCP server environment, so
+declare its own `TOOLSCOUT_AGENT_NAME` in the MCP server environment, so
 tool-memory records are correctly attributed to the agent that wrote them.
 
 Hermes:
@@ -472,12 +473,12 @@ Hermes:
 Add to `~/.hermes/config.yaml` under `mcp_servers`:
 
   mcp_servers:
-    tool_first:
-      command: "/absolute/path/to/tool-first"
+    toolscout:
+      command: "/absolute/path/to/toolscout"
       args: ["mcp", "serve"]
       env:
-        TOOL_FIRST_MEMORY_HOME: "<confirmed-path>"
-        TOOL_FIRST_AGENT_NAME: "hermes"
+        TOOLSCOUT_MEMORY_HOME: "<confirmed-path>"
+        TOOLSCOUT_AGENT_NAME: "hermes"
       timeout: 120
       connect_timeout: 60
       tools:
@@ -495,34 +496,34 @@ Add to `~/.hermes/config.yaml` under `mcp_servers`:
 
 Claude Code:
 
-  claude mcp add tool-first \
+  claude mcp add toolscout \
     --scope user \
-    -e TOOL_FIRST_MEMORY_HOME="<confirmed-path>" \
-    -e TOOL_FIRST_AGENT_NAME="claude-code" \
-    -- /absolute/path/to/tool-first mcp serve
+    -e TOOLSCOUT_MEMORY_HOME="<confirmed-path>" \
+    -e TOOLSCOUT_AGENT_NAME="claude-code" \
+    -- /absolute/path/to/toolscout mcp serve
 
 Codex:
 
-  codex mcp add tool-first \
-    --env TOOL_FIRST_MEMORY_HOME="<confirmed-path>" \
-    --env TOOL_FIRST_AGENT_NAME="codex" \
-    -- /absolute/path/to/tool-first mcp serve
+  codex mcp add toolscout \
+    --env TOOLSCOUT_MEMORY_HOME="<confirmed-path>" \
+    --env TOOLSCOUT_AGENT_NAME="codex" \
+    -- /absolute/path/to/toolscout mcp serve
 
 When MCP is available, prefer the MCP tool `advise_tool_use` over the CLI
-fallback `tool-first advise`.
+fallback `toolscout advise`.
 
 Hermes may expose it as:
 
-  mcp_tool_first_advise_tool_use
+  mcp_toolscout_advise_tool_use
 
 ## Step 6: Verify behavior
 
 Run:
 
-  tool-first --version
-  tool-first doctor
-  tool-first advise --task "extract fields from a json file" --intent avoid_custom_code --category data --json
-  tool-first advise --task "resize a png image to 800px" --intent avoid_custom_code --category image --json
+  toolscout --version
+  toolscout doctor
+  toolscout advise --task "extract fields from a json file" --intent avoid_custom_code --category data --json
+  toolscout advise --task "resize a png image to 800px" --intent avoid_custom_code --category image --json
 
 Expected behavior:
 - JSON tasks should recommend tools such as `jq` or `yq` when available.
@@ -533,30 +534,30 @@ Expected behavior:
 
 Optional persistence check:
 
-  tool-first tools detect --category data --record --json
-  tool-first memory recall --task "json" --json
+  toolscout tools detect --category data --record --json
+  toolscout memory recall --task "json" --json
 
 ## Step 7: Final report
 
 Report back with:
 
 - Agent configured: Codex / Claude Code / Hermes Agent
-- Binary path: output of `command -v tool-first`
-- Binary version: output of `tool-first --version`
+- Binary path: output of `command -v toolscout`
+- Binary version: output of `toolscout --version`
 - Skill directory used
 - Agent rule file updated
-- TOOL_FIRST_MEMORY_HOME value
+- TOOLSCOUT_MEMORY_HOME value
 - Whether `.tool-memory-home` exists
-- Whether `tool-first doctor` passed
-- Whether `tool-first advise` returned a useful recommendation
+- Whether `toolscout doctor` passed
+- Whether `toolscout advise` returned a useful recommendation
 - Whether MCP was configured, and the exposed tool name if applicable
-- Any conflicts from `tool-first memory check-conflicts --json`
+- Any conflicts from `toolscout memory check-conflicts --json`
 ````
 
 ### Project Structure
 
 ```text
-tool-first-agent/
+toolscout/
 ├── README.md                           # this file
 ├── SKILL.md                            # sole execution rule source
 ├── Cargo.toml                          # workspace root
@@ -564,11 +565,11 @@ tool-first-agent/
 ├── references/                         # integration & architecture docs
 ├── registry/
 │   └── tools.yaml                      # candidate tool definitions (10 categories, ~40 tools)
-└── crates/tool-first/
+└── crates/toolscout/
     └── src/
         ├── main.rs                     # CLI entry point
         ├── config.rs                   # config loading + resolution
-        ├── resolver.rs                 # TOOL_FIRST_MEMORY_HOME + markers
+        ├── resolver.rs                 # TOOLSCOUT_MEMORY_HOME + markers
         ├── registry.rs                 # registry query
         ├── advice.rs                   # scoped pre-code tool recommendation
         ├── detect.rs                   # tool detection
@@ -596,12 +597,12 @@ MIT
 ### 架构
 
 ```text
-tool-first-agent = Rust 运行时核心 + SKILL.md 规则层 + 共享工具记忆
+toolscout = Rust 运行时核心 + SKILL.md 规则层 + 共享工具记忆
 ```
 
 - `SKILL.md` 是 Agent 的唯一执行规则源。
 - Rust 运行时核心提供快速的本地 CLI 和 MCP 访问。
-- `tool-memory` 是通过 `TOOL_FIRST_MEMORY_HOME` 定位的共享运行时基础设施。
+- `tool-memory` 是通过 `TOOLSCOUT_MEMORY_HOME` 定位的共享运行时基础设施。
 - `tool-memory` 不是权威 Vault 记忆，不得自动提升为高权威记忆。
 
 ### 三层设计
@@ -610,9 +611,9 @@ tool-first-agent = Rust 运行时核心 + SKILL.md 规则层 + 共享工具记�
 |----|------|
 | **SKILL.md** | "Agent 应该怎么做" — 唯一执行规则源 |
 | **Rust 运行时核心** | "高频、稳定、快速的查询和写入" — CLI / MCP / 注册表 / 检测 / 记忆 |
-| **共享工具记忆** | "多 Agent 共享工具经验" — 通过 `TOOL_FIRST_MEMORY_HOME` 定位 |
+| **共享工具记忆** | "多 Agent 共享工具经验" — 通过 `TOOLSCOUT_MEMORY_HOME` 定位 |
 
-**不要默认创建 `02-Rules/Tool-Inventory`。** 可执行的 tool-first 行为属于 `SKILL.md`。
+**不要默认创建 `02-Rules/Tool-Inventory`。** 可执行的 toolscout 行为属于 `SKILL.md`。
 
 ### 为什么需要这个项目
 
@@ -625,42 +626,42 @@ AI 助手经常在 `pandoc`、`jq`、`ffmpeg`、`magick` 等工具一条命令�
 5. **记录新经验** — 保存成功和失败记录供未来使用
 
 ```text
-准备为通用本地操作编写临时代码时 → 运行 tool-first → 优先使用成熟工具
+准备为通用本地操作编写临时代码时 → 运行 toolscout → 优先使用成熟工具
 ```
 
 ### v0.3.0：写临时代码前的检查门，而不是任务路由器
 
 - 普通对话、解释、代码审阅和正常软件开发会在探测工具或读取 memory
   之前返回 `not_applicable`。
-- 用户明确要求实现脚本、程序、库、API 或应用时不触发 tool-first。
+- 用户明确要求实现脚本、程序、库、API 或应用时不触发 toolscout。
 - 每次最多探测五个限定类别的候选工具。
 - 只有候选工具不可用或显式传入 `--recall` 时才查询 tool-memory。
 - CLI 和 MCP 默认返回紧凑结果；诊断明细需显式传入 `--verbose`。
 
-### v0.3.1：独立二进制修复
+### v1.0.0：ToolScout 品牌重命名
 
-- 将默认工具注册表编译进可执行文件，从 Release 下载的二进制无需额外
-  `registry/tools.yaml`，也能在源码仓库之外正常运行。
+- 项目、CLI、MCP 服务、配置和运行时环境统一重命名为 ToolScout。这是一次
+  干净切换：不保留旧命令或兼容别名。
 
 ### 快速开始
 
 ```bash
 # 下载预编译二进制（macOS，无需 Rust 环境）
-curl -sL https://github.com/licat233/tool-first-agent/releases/download/v0.3.1/tool-first-universal-apple-darwin.tar.gz | tar xz
-mv tool-first-universal /usr/local/bin/tool-first
+curl -sL https://github.com/licat233/toolscout/releases/download/v1.0.0/toolscout-universal-apple-darwin.tar.gz | tar xz
+mv toolscout-universal /usr/local/bin/toolscout
 
 # 初始化 memory home 一次，然后验证
-tool-first memory init --json
-tool-first doctor
+toolscout memory init --json
+toolscout doctor
 
 # 仅在准备重复实现通用操作时检查已有工具
-tool-first advise --task "extract text from a docx file" \
+toolscout advise --task "extract text from a docx file" \
   --intent avoid_custom_code --category document --json
 
 # 必要时再手动查询和检测
-tool-first registry query --category document --json
-tool-first tools detect --category document --json
-tool-first tools detect --category document --record --json
+toolscout registry query --category document --json
+toolscout tools detect --category document --json
+toolscout tools detect --category document --record --json
 ```
 
 > Linux 用户：需要从源码编译 `cargo build --release`（需要 Rust 1.75+）。
@@ -668,26 +669,26 @@ tool-first tools detect --category document --record --json
 ### CLI 命令
 
 ```bash
-tool-first advise --task <操作> --intent avoid_custom_code --category <类别> --json
-tool-first memory resolve --json          # 解析 canonical memory home
-tool-first memory init --json             # 明确确认后初始化 memory home
-tool-first memory recall --task <text>    # 搜索工具记忆
-tool-first memory record '<json>' --json  # 写入一条记录
-tool-first memory check-conflicts --json  # 检查路径冲突
-tool-first registry query --category <c>  # 按类别查询注册表
-tool-first tools detect --category <c>    # 检测已安装工具
-tool-first tools detect --category <c> --record  # 写入 availability 记录
-tool-first doctor                          # 运行诊断
-tool-first mcp serve                       # 启动 MCP stdio 服务器
+toolscout advise --task <操作> --intent avoid_custom_code --category <类别> --json
+toolscout memory resolve --json          # 解析 canonical memory home
+toolscout memory init --json             # 明确确认后初始化 memory home
+toolscout memory recall --task <text>    # 搜索工具记忆
+toolscout memory record '<json>' --json  # 写入一条记录
+toolscout memory check-conflicts --json  # 检查路径冲突
+toolscout registry query --category <c>  # 按类别查询注册表
+toolscout tools detect --category <c>    # 检测已安装工具
+toolscout tools detect --category <c> --record  # 写入 availability 记录
+toolscout doctor                          # 运行诊断
+toolscout mcp serve                       # 启动 MCP stdio 服务器
 ```
 
 ### 支持的 Agent
 
 | Agent | 配置文件 | 技能目录 |
 |-------|----------|----------|
-| **Hermes Agent** | `~/.hermes/SOUL.md` | `~/.hermes/skills/devops/tool-first-agent/` |
-| **Claude Code** | `~/.claude/CLAUDE.md` | `~/.claude/skills/tool-first-agent/` |
-| **Codex** | `~/.codex/AGENTS.md` | `~/.codex/skills/tool-first-agent/` |
+| **Hermes Agent** | `~/.hermes/SOUL.md` | `~/.hermes/skills/devops/toolscout/` |
+| **Claude Code** | `~/.claude/CLAUDE.md` | `~/.claude/skills/toolscout/` |
+| **Codex** | `~/.codex/AGENTS.md` | `~/.codex/skills/toolscout/` |
 
 跨 Agent 更新步骤见 [`update.md`](update.md)。
 
@@ -707,15 +708,15 @@ tool-first mcp serve                       # 启动 MCP stdio 服务器
 - 零依赖，可直接查看，Git 友好
 - 文件名格式：`{时间戳}-{agent}-{工具}-{任务类型}-{uuid}.json`
 
-Obsidian 用户应将 `TOOL_FIRST_MEMORY_HOME` 指向 vault 内的低权威 runtime 路径（如 `<Vault>/92-Logs/_shared/tool-memory/`）。
+Obsidian 用户应将 `TOOLSCOUT_MEMORY_HOME` 指向 vault 内的低权威 runtime 路径（如 `<Vault>/92-Logs/_shared/tool-memory/`）。
 
 ### 环境变量
 
 | 变量 | 用途 |
 |------|------|
-| `TOOL_FIRST_MEMORY_HOME` | 共享工具记忆主目录（最高优先级） |
-| `TOOL_FIRST_MEMORY_CONFIG` | 覆盖配置文件位置 |
-| `TOOL_FIRST_AGENT_NAME` | 记录中的 Agent 名称（`hermes`、`claude-code`、`codex`） |
+| `TOOLSCOUT_MEMORY_HOME` | 共享工具记忆主目录（最高优先级） |
+| `TOOLSCOUT_MEMORY_CONFIG` | 覆盖配置文件位置 |
+| `TOOLSCOUT_AGENT_NAME` | 记录中的 Agent 名称（`hermes`、`claude-code`、`codex`） |
 
 ### 环境要求
 

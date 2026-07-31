@@ -43,6 +43,6 @@ Full scans are maintenance operations only.
   only that category and at most five candidates.
 - Later tasks: use cache/memory when fresh.
 - Tool failure: re-detect that tool.
-- Tool install/uninstall: run `tool-first tools detect --category <cat>`.
+- Tool install/uninstall: run `toolscout tools detect --category <cat>`.
 - Recall tool-memory only after relevant registered candidates are unavailable,
   or when explicitly requested.

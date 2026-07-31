@@ -1,4 +1,4 @@
-# tool-first-agent update guide
+# toolscout update guide
 
 This document explains how to propagate the reduced auto-trigger behavior across
 Codex, Claude Code, and Hermes Agent.
@@ -10,7 +10,7 @@ Hermes Agent。
 
 The update has two parts:
 
-1. `tool-first` CLI recommendation logic was tightened.
+1. `toolscout` CLI recommendation logic was tightened.
    - Normal conversation, explanations, code reading, repository summaries, and
      ordinary software development return `not_applicable` without tool
      detection or tool-memory recall.
@@ -29,31 +29,31 @@ The update has two parts:
 Build the new binary:
 
 ```bash
-cd /Users/licat/Desktop/project/tool-first-agent
+cd /Users/licat/Desktop/project/toolscout
 cargo build --release
 ```
 
 Install it to the command path used by all agents:
 
 ```bash
-cp target/release/tool-first ~/.local/bin/tool-first
+cp target/release/toolscout ~/.local/bin/toolscout
 ```
 
-If executing `~/.local/bin/tool-first` hangs on this machine, use a wrapper
+If executing `~/.local/bin/toolscout` hangs on this machine, use a wrapper
 instead:
 
 ```bash
-mv ~/.local/bin/tool-first ~/.local/bin/tool-first.real-$(date +%Y%m%d)
-printf '%s\n' '#!/bin/sh' 'exec /Users/licat/Desktop/project/tool-first-agent/target/release/tool-first "$@"' > ~/.local/bin/tool-first
-chmod +x ~/.local/bin/tool-first
+mv ~/.local/bin/toolscout ~/.local/bin/toolscout.real-$(date +%Y%m%d)
+printf '%s\n' '#!/bin/sh' 'exec /Users/licat/Desktop/project/toolscout/target/release/toolscout "$@"' > ~/.local/bin/toolscout
+chmod +x ~/.local/bin/toolscout
 ```
 
 Verify:
 
 ```bash
-tool-first --version
-tool-first advise --task "看一下 README.md 总结项目" --json
-tool-first advise --task "resize png image to 800px" --intent avoid_custom_code --category image --json
+toolscout --version
+toolscout advise --task "看一下 README.md 总结项目" --json
+toolscout advise --task "resize png image to 800px" --intent avoid_custom_code --category image --json
 ```
 
 Expected behavior:
@@ -67,15 +67,15 @@ Expected behavior:
 Sync the skill:
 
 ```bash
-cp /Users/licat/Desktop/project/tool-first-agent/SKILL.md ~/.codex/skills/tool-first-agent/SKILL.md
+cp /Users/licat/Desktop/project/toolscout/SKILL.md ~/.codex/skills/toolscout/SKILL.md
 ```
 
-Update `~/.codex/AGENTS.md` so its Tool-First Rule uses this wording:
+Update `~/.codex/AGENTS.md` so its ToolScout Rule uses this wording:
 
 ```markdown
-## Tool-First Rule
+## ToolScout Rule
 
-Do not invoke tool-first at task start. Invoke it only immediately before
+Do not invoke toolscout at task start. Invoke it only immediately before
 writing incidental code that would reimplement a commodity local operation, or
 before installing a dependency for that operation.
 
@@ -84,7 +84,7 @@ planning, code review, repository summaries, or simple inspection commands such
 as `rg`, `sed`, `cat`, `ls`, and `git status`.
 
 1. For an in-scope operation run:
-   `tool-first advise --task "<operation>" --intent avoid_custom_code --category <category> --json`
+   `toolscout advise --task "<operation>" --intent avoid_custom_code --category <category> --json`
 2. If the decision is `use_existing_tool`, use the recommended tool before
    writing custom code.
 3. If the decision is `verify_recalled_recipe`, re-detect the tool and reuse the
@@ -96,7 +96,7 @@ as `rg`, `sed`, `cat`, `ls`, and `git status`.
 If writing code, briefly state why: "No existing tool fits because ..."
 
 tool-memory is shared runtime infrastructure, not authoritative Vault memory.
-Do not create private tool-memory when TOOL_FIRST_MEMORY_HOME exists.
+Do not create private tool-memory when TOOLSCOUT_MEMORY_HOME exists.
 SKILL.md is the sole execution rule source.
 ```
 
@@ -107,10 +107,10 @@ Restart Codex sessions that already loaded the old rule.
 Sync the skill:
 
 ```bash
-cp /Users/licat/Desktop/project/tool-first-agent/SKILL.md ~/.claude/skills/tool-first-agent/SKILL.md
+cp /Users/licat/Desktop/project/toolscout/SKILL.md ~/.claude/skills/toolscout/SKILL.md
 ```
 
-Update `~/.claude/CLAUDE.md` with the same Tool-First Rule block shown in the
+Update `~/.claude/CLAUDE.md` with the same ToolScout Rule block shown in the
 Codex section.
 
 Restart Claude Code sessions that already loaded the old rule.
@@ -120,24 +120,24 @@ Restart Claude Code sessions that already loaded the old rule.
 Sync the skill:
 
 ```bash
-cp /Users/licat/Desktop/project/tool-first-agent/SKILL.md ~/.hermes/skills/devops/tool-first-agent/SKILL.md
+cp /Users/licat/Desktop/project/toolscout/SKILL.md ~/.hermes/skills/devops/toolscout/SKILL.md
 ```
 
-Update `~/.hermes/SOUL.md` with the same Tool-First Rule block shown in the
+Update `~/.hermes/SOUL.md` with the same ToolScout Rule block shown in the
 Codex section.
 
 Restart Hermes Agent sessions that already loaded the old rule.
 
 ## MCP Notes
 
-If an agent uses `tool-first mcp serve`, no MCP config change is required when
-the command path still resolves to `tool-first`.
+If an agent uses `toolscout mcp serve`, no MCP config change is required when
+the command path still resolves to `toolscout`.
 
 If the MCP config points to an old absolute binary path, update it to one of:
 
 ```bash
-/Users/licat/.local/bin/tool-first mcp serve
-/Users/licat/Desktop/project/tool-first-agent/target/release/tool-first mcp serve
+/Users/licat/.local/bin/toolscout mcp serve
+/Users/licat/Desktop/project/toolscout/target/release/toolscout mcp serve
 ```
 
 ## Do Not
@@ -145,5 +145,5 @@ If the MCP config points to an old absolute binary path, update it to one of:
 - Do not keep the old broad rule text that runs the gate at task start or for
   ordinary software development.
 - Do not copy `SKILL.md` into a Vault rule directory as a second source of truth.
-- Do not create a private tool-memory home when `TOOL_FIRST_MEMORY_HOME` exists.
+- Do not create a private tool-memory home when `TOOLSCOUT_MEMORY_HOME` exists.
 - Do not treat tool-memory as authoritative long-term memory.

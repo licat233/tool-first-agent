@@ -1,4 +1,4 @@
-# SOUL.md Integration — Tool-First Rule
+# SOUL.md Integration — ToolScout Rule
 
 Add this rule to `~/.hermes/SOUL.md` so Hermes Agent checks existing tools
 before incidental code reimplements a commodity operation.
@@ -6,17 +6,17 @@ before incidental code reimplements a commodity operation.
 ## Recommended Rule Text
 
 ```markdown
-## Tool-First Rule (G4)
+## ToolScout Rule (G4)
 
-Do not invoke tool-first at task start. Invoke it only immediately before
+Do not invoke toolscout at task start. Invoke it only immediately before
 writing incidental code that would reimplement a commodity local operation, or
 before installing a dependency for that operation. Ordinary software
 development does not trigger this rule.
 
-1. **Load the `tool-first-agent` skill** — it provides a registry of candidate
+1. **Load the `toolscout` skill** — it provides a registry of candidate
    tools, lazy category-based detection, and shared runtime tool-memory.
 2. For an in-scope operation run:
-   `tool-first advise --task "<operation>" --intent avoid_custom_code --category <category> --json`
+   `toolscout advise --task "<operation>" --intent avoid_custom_code --category <category> --json`
 3. If the decision is `use_existing_tool`, use the recommended tool before
    writing custom code.
 4. If the decision is `verify_recalled_recipe`, re-detect the tool and reuse the
@@ -28,7 +28,7 @@ development does not trigger this rule.
 If writing code, briefly state why: "No existing tool fits because …"
 
 tool-memory is shared runtime infrastructure, not authoritative Vault memory.
-Do not create private tool-memory when TOOL_FIRST_MEMORY_HOME exists.
+Do not create private tool-memory when TOOLSCOUT_MEMORY_HOME exists.
 Do not default-create 02-Rules/Tool-Inventory.
 SKILL.md is the sole execution rule source.
 ```
@@ -37,28 +37,28 @@ SKILL.md is the sole execution rule source.
 
 - `~/.hermes/SOUL.md` is loaded by `agent/prompt_builder.py::load_soul_md()`
   and injected as the agent identity (slot #1 in the system prompt).
-- The rule references `tool-first-agent` by name, which triggers the
+- The rule references `toolscout` by name, which triggers the
   skill-loading mechanism in the system prompt's "Skills" section.
 - Without this rule, the skill is available but only loaded when explicitly
-  requested (`/skill tool-first-agent`).
+  requested (`/skill toolscout`).
 
 ## Installation
 
 ```bash
-git clone https://github.com/licat233/tool-first-agent.git
-cd tool-first-agent
+git clone https://github.com/licat233/toolscout.git
+cd toolscout
 cargo build --release
-cp target/release/tool-first /usr/local/bin/
+cp target/release/toolscout /usr/local/bin/
 ```
 
 ## Environment Variables
 
 ```bash
-export TOOL_FIRST_MEMORY_HOME="/path/to/tool-memory"
-export TOOL_FIRST_AGENT_NAME="hermes"
+export TOOLSCOUT_MEMORY_HOME="/path/to/tool-memory"
+export TOOLSCOUT_AGENT_NAME="hermes"
 ```
 
 ## MCP Integration (Optional)
 
-Optionally configure `tool-first mcp serve` as a Hermes MCP server.
+Optionally configure `toolscout mcp serve` as a Hermes MCP server.
 See `references/mcp-integration.md` for the config snippet.

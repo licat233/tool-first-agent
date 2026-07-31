@@ -22,10 +22,10 @@ pub struct MemoryHomeMarker {
 impl Default for MemoryHomeMarker {
     fn default() -> Self {
         Self {
-            marker_type: "tool-first-agent-memory-home".to_string(),
+            marker_type: "toolscout-memory-home".to_string(),
             version: "1.0".to_string(),
             canonical: true,
-            source: "TOOL_FIRST_MEMORY_HOME".to_string(),
+            source: "TOOLSCOUT_MEMORY_HOME".to_string(),
             adapter: "file".to_string(),
             authority: "runtime-infrastructure".to_string(),
             vault_authority: "none".to_string(),
@@ -45,13 +45,13 @@ pub struct MemoryRedirectMarker {
 /// Resolve the canonical tool-memory home directory.
 ///
 /// Priority:
-///   1. `TOOL_FIRST_MEMORY_HOME` env var (highest)
+///   1. `TOOLSCOUT_MEMORY_HOME` env var (highest)
 ///   2. `config.memory_home`
 ///   3. `config.file.base_dir`
-///   4. `~/.config/tool-first-agent/tool-memory` (default)
+///   4. `~/.config/toolscout/tool-memory` (default)
 pub fn resolve_memory_home(cfg: &Config) -> PathBuf {
     // 1. env var
-    if let Ok(env_home) = std::env::var("TOOL_FIRST_MEMORY_HOME") {
+    if let Ok(env_home) = std::env::var("TOOLSCOUT_MEMORY_HOME") {
         return follow_redirects(PathBuf::from(shellexpand(&env_home)));
     }
 
@@ -72,7 +72,7 @@ pub fn resolve_memory_home(cfg: &Config) -> PathBuf {
 pub fn default_memory_home() -> PathBuf {
     dirs::config_dir()
         .unwrap_or_else(|| PathBuf::from("~/.config"))
-        .join("tool-first-agent")
+        .join("toolscout")
         .join("tool-memory")
 }
 
@@ -136,12 +136,12 @@ pub fn check_redirect(dir: &Path) -> Option<String> {
 pub fn detect_memory_homes() -> Vec<MemoryHomeCandidate> {
     let mut candidates = Vec::new();
 
-    // Check TOOL_FIRST_MEMORY_HOME
-    if let Ok(env_home) = std::env::var("TOOL_FIRST_MEMORY_HOME") {
+    // Check TOOLSCOUT_MEMORY_HOME
+    if let Ok(env_home) = std::env::var("TOOLSCOUT_MEMORY_HOME") {
         let path = PathBuf::from(shellexpand(&env_home));
         candidates.push(MemoryHomeCandidate {
             path: path.clone(),
-            source: "TOOL_FIRST_MEMORY_HOME".to_string(),
+            source: "TOOLSCOUT_MEMORY_HOME".to_string(),
             has_marker: has_marker(&path),
             is_canonical: true,
         });
@@ -234,7 +234,7 @@ mod tests {
 
     fn temp_memory_home(name: &str) -> PathBuf {
         std::env::temp_dir().join(format!(
-            "tool-first-resolver-test-{name}-{}",
+            "toolscout-resolver-test-{name}-{}",
             uuid::Uuid::new_v4()
         ))
     }

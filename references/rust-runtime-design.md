@@ -1,10 +1,10 @@
 # Rust Runtime Design
 
-This document describes the architecture of the Rust runtime core in `tool-first-agent`.
+This document describes the architecture of the Rust runtime core in `toolscout`.
 
 ## Overview
 
-The Rust runtime core is a single binary (`tool-first`) that provides:
+The Rust runtime core is a single binary (`toolscout`) that provides:
 
 - **CLI** — for debugging, scripting, and low-frequency calls
 - **MCP server** — for agent high-frequency calls over stdio JSON-RPC 2.0
@@ -20,7 +20,7 @@ MCP  = Agent high-frequency entry point
 |--------|---------------|
 | `main.rs` | CLI parsing (clap), command dispatch |
 | `config.rs` | Load `config.yaml`, resolve adapter name |
-| `resolver.rs` | `TOOL_FIRST_MEMORY_HOME` resolution, `.tool-memory-home` / `.tool-memory-redirect` markers, conflict detection |
+| `resolver.rs` | `TOOLSCOUT_MEMORY_HOME` resolution, `.tool-memory-home` / `.tool-memory-redirect` markers, conflict detection |
 | `registry.rs` | Load and query `registry/tools.yaml` |
 | `detect.rs` | Detect installed tools via `which`, known paths, version checks |
 | `memory.rs` | `MemoryRecord` struct, `MemoryAdapter` trait, adapter factory |
@@ -45,9 +45,9 @@ MCP  = Agent high-frequency entry point
 
 ## Design Principles
 
-1. **Single binary** — `tool-first` is a statically-linked Rust binary. No Python, no Node, no runtime dependencies.
+1. **Single binary** — `toolscout` is a statically-linked Rust binary. No Python, no Node, no runtime dependencies.
 2. **Zero config defaults** — works out of the box with sensible defaults.
-3. **TOOL_FIRST_MEMORY_HOME first** — env var is always the highest priority.
+3. **TOOLSCOUT_MEMORY_HOME first** — env var is always the highest priority.
 4. **Atomic writes** — file adapter uses `.tmp` + `rename` for crash safety.
 5. **No dangerous operations** — the core never executes registry commands on behalf of the agent. It only suggests.
 6. **Shared state** — all agents point to the same tool-memory home. Records include `source_agent` for provenance.

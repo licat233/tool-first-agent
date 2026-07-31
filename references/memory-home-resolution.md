@@ -15,17 +15,17 @@ It is **not** current truth. It is **not** user-approved long-term memory. It is
 
 | Priority | Source | Description |
 |----------|--------|-------------|
-| 1 | `TOOL_FIRST_MEMORY_HOME` env var | Highest priority. All agents use this. |
+| 1 | `TOOLSCOUT_MEMORY_HOME` env var | Highest priority. All agents use this. |
 | 2 | `memory_home` in config.yaml | User-level config. |
 | 3 | `file.base_dir` in config.yaml | Legacy compat. |
-| 4 | Default | `~/.config/tool-first-agent/tool-memory` |
+| 4 | Default | `~/.config/toolscout/tool-memory` |
 
 ### Rules
 
-1. If `TOOL_FIRST_MEMORY_HOME` is set, treat it as the canonical home.
+1. If `TOOLSCOUT_MEMORY_HOME` is set, treat it as the canonical home.
 2. Do not create private tool-memory elsewhere.
 3. Do not silently fall back while it exists.
-4. If the directory does not exist, initialize it after confirming intent with `tool-first memory init`.
+4. If the directory does not exist, initialize it after confirming intent with `toolscout memory init`.
 5. Add `.tool-memory-home` marker if missing.
 
 ## Recommended Locations
@@ -33,7 +33,7 @@ It is **not** current truth. It is **not** user-approved long-term memory. It is
 ### Vault-external
 
 ```
-~/AI-Runtime/tool-first-agent/tool-memory
+~/AI-Runtime/toolscout/tool-memory
 ```
 
 ### ARMOR Enterprise Vault
@@ -60,10 +60,10 @@ Do not place tool-memory in:
 
 ```json
 {
-  "type": "tool-first-agent-memory-home",
+  "type": "toolscout-memory-home",
   "version": "1.0",
   "canonical": true,
-  "source": "TOOL_FIRST_MEMORY_HOME",
+  "source": "TOOLSCOUT_MEMORY_HOME",
   "adapter": "file",
   "authority": "runtime-infrastructure",
   "vault_authority": "none",
@@ -86,5 +86,5 @@ For old paths:
 ## macOS GUI Apps
 
 ```bash
-launchctl setenv TOOL_FIRST_MEMORY_HOME "/path/to/tool-memory"
+launchctl setenv TOOLSCOUT_MEMORY_HOME "/path/to/tool-memory"
 ```

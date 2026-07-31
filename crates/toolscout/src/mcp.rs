@@ -228,7 +228,7 @@ fn handle_request(
                     let has_marker = resolver::has_marker(memory_home);
                     mcp_tool_result(serde_json::json!({
                         "memory_home": memory_home.to_string_lossy(),
-                        "TOOL_FIRST_MEMORY_HOME": std::env::var("TOOL_FIRST_MEMORY_HOME").unwrap_or_else(|_| "(not set)".to_string()),
+                        "TOOLSCOUT_MEMORY_HOME": std::env::var("TOOLSCOUT_MEMORY_HOME").unwrap_or_else(|_| "(not set)".to_string()),
                         "has_marker": has_marker,
                     }))
                 }
@@ -326,7 +326,7 @@ fn handle_request(
             serde_json::json!({
                 "protocolVersion": "2024-11-05",
                 "capabilities": { "tools": {} },
-                "serverInfo": { "name": "tool-first", "version": env!("CARGO_PKG_VERSION") }
+                "serverInfo": { "name": "toolscout", "version": env!("CARGO_PKG_VERSION") }
             })
         }
 
@@ -377,7 +377,7 @@ fn doctor(memory_home: &std::path::Path, reg: &registry::Registry) -> Value {
 
     serde_json::json!({
         "memory_home": memory_home.to_string_lossy(),
-        "TOOL_FIRST_MEMORY_HOME": std::env::var("TOOL_FIRST_MEMORY_HOME").unwrap_or_else(|_| "(not set)".to_string()),
+        "TOOLSCOUT_MEMORY_HOME": std::env::var("TOOLSCOUT_MEMORY_HOME").unwrap_or_else(|_| "(not set)".to_string()),
         "adapter": "file",
         "has_marker": has_marker,
         "backend": backend_info,
@@ -396,7 +396,7 @@ mod tests {
 
     fn temp_memory_home(name: &str) -> PathBuf {
         std::env::temp_dir().join(format!(
-            "tool-first-mcp-test-{name}-{}",
+            "toolscout-mcp-test-{name}-{}",
             uuid::Uuid::new_v4()
         ))
     }

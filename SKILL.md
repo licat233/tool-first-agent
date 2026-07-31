@@ -1,5 +1,5 @@
 ---
-name: tool-first-agent
+name: toolscout
 description: |
   Use this skill before writing custom scripts, installing tools, or performing
   file/data transformation, format conversion, extraction, batch processing, or
@@ -8,7 +8,7 @@ description: |
   inspection.
 ---
 
-# Tool First Agent
+# ToolScout
 
 Use this skill when the user asks to convert formats, extract data, batch-process
 files, transform JSON/CSV/XML/SQLite, work with PDF/Office documents, process
@@ -22,11 +22,11 @@ such as `rg`, `sed`, `cat`, `ls`, and `git status`.
 ## Architecture
 
 ```
-tool-first-agent = Rust runtime core + SKILL.md rule layer + shared file-based tool-memory
+toolscout = Rust runtime core + SKILL.md rule layer + shared file-based tool-memory
 ```
 
 ```text
-tool-first-agent/
+toolscout/
 ├── SKILL.md                    ← you are here (sole execution rule source)
 ├── README.md                   ← installation & usage entry
 ├── Cargo.toml                  ← workspace root
@@ -44,11 +44,11 @@ tool-first-agent/
 │   ├── tool-memory-format.md
 │   ├── registry-schema.md
 │   └── scanning-policy.md
-└── crates/tool-first/
+└── crates/toolscout/
     └── src/
         ├── main.rs             # CLI entry point
         ├── config.rs           # config loading
-        ├── resolver.rs         # TOOL_FIRST_MEMORY_HOME + markers
+        ├── resolver.rs         # TOOLSCOUT_MEMORY_HOME + markers
         ├── registry.rs         # registry query
         ├── detect.rs           # tool detection
         ├── memory.rs           # MemoryRecord struct
@@ -58,15 +58,15 @@ tool-first-agent/
 
 ## Core Rule
 
-Do not invoke tool-first at task start. Invoke it immediately before an agent
+Do not invoke toolscout at task start. Invoke it immediately before an agent
 would write incidental code that reimplements a commodity local operation, or
 before installing a tool or dependency for that operation.
 
 1. **Check relevant skills first** — a dedicated skill outranks this general gate.
-2. Skip tool-first for ordinary software development, conversation, explanation,
+2. Skip toolscout for ordinary software development, conversation, explanation,
    planning, code reading/review, and already-selected tools.
 3. For an in-scope operation, run:
-   `tool-first advise --task "<operation>" --intent avoid_custom_code --category <category> --json`
+   `toolscout advise --task "<operation>" --intent avoid_custom_code --category <category> --json`
 4. If the decision is `use_existing_tool`, use it instead of writing incidental code.
 5. If the decision is `verify_recalled_recipe`, re-detect the recalled tool.
 6. If the decision is `known_tool_not_installed`, ask before installing it.
@@ -93,24 +93,24 @@ memory automatically.
 All agents (Codex, Claude Code, Hermes) share one canonical runtime tool-memory home.
 Each record includes `source_agent` to identify which agent wrote it.
 
-## TOOL_FIRST_MEMORY_HOME
+## TOOLSCOUT_MEMORY_HOME
 
 This environment variable is the highest priority path entry for tool-memory.
 
 Resolution priority:
-1. `TOOL_FIRST_MEMORY_HOME` env var
-2. `memory_home` key in `~/.config/tool-first-agent/config.yaml`
+1. `TOOLSCOUT_MEMORY_HOME` env var
+2. `memory_home` key in `~/.config/toolscout/config.yaml`
 3. `file.base_dir` in config
-4. Default: `~/.config/tool-first-agent/tool-memory`
+4. Default: `~/.config/toolscout/tool-memory`
 
-If `TOOL_FIRST_MEMORY_HOME` is set, all agents use it as the canonical home.
+If `TOOLSCOUT_MEMORY_HOME` is set, all agents use it as the canonical home.
 Do not create private tool-memory elsewhere. Do not silently fall back while it exists.
 
 See `references/memory-home-resolution.md` for the full resolution rules.
 
 ## Tool Memory Storage
 
-tool-first-agent uses a file-based shared tool-memory store.
+toolscout uses a file-based shared tool-memory store.
 
 One record per JSON file, append-only, atomic writes (`.tmp` + rename).
 
@@ -137,7 +137,7 @@ See `references/tool-memory-format.md` for the full record schema.
 
 Rules:
 - Agents may share tool-memory.
-- Agents may **not** create private tool-memory when `TOOL_FIRST_MEMORY_HOME` exists.
+- Agents may **not** create private tool-memory when `TOOLSCOUT_MEMORY_HOME` exists.
 - Agents may **not** treat tool-memory as current truth.
 - Agents may **not** use another agent's execution record as approved SOP.
 - If a tool recipe should become a formal rule, create a proposal or update SKILL.md
@@ -151,36 +151,36 @@ Build: `cargo build --release`
 
 ```bash
 # Resolve the canonical memory home
-tool-first advise --task "<operation>" --intent avoid_custom_code --category image --json
-tool-first memory resolve --json
+toolscout advise --task "<operation>" --intent avoid_custom_code --category image --json
+toolscout memory resolve --json
 
 # Initialize the resolved memory home only after explicit intent
-tool-first memory init --json
+toolscout memory init --json
 
 # Query the registry for candidate tools
-tool-first registry query --category document --json
-tool-first registry query --task "extract docx text" --json
+toolscout registry query --category document --json
+toolscout registry query --task "extract docx text" --json
 
 # Detect which candidate tools are installed
-tool-first tools detect --category document --json
+toolscout tools detect --category document --json
 
 # Persist availability records when detection should be retained
-tool-first tools detect --category document --record --json
+toolscout tools detect --category document --record --json
 
 # Recall past experience from tool-memory
-tool-first memory recall --task "extract docx text" --json
+toolscout memory recall --task "extract docx text" --json
 
 # Record a tool experience
-tool-first memory record '{"record_type":"recipe","category":"document","tool":"pandoc","task":"extract_text_from_docx","status":"verified_success","command_template":"pandoc {input} -t plain","source_agent":"claude-code"}' --json
+toolscout memory record '{"record_type":"recipe","category":"document","tool":"pandoc","task":"extract_text_from_docx","status":"verified_success","command_template":"pandoc {input} -t plain","source_agent":"claude-code"}' --json
 
 # Check for memory home conflicts
-tool-first memory check-conflicts --json
+toolscout memory check-conflicts --json
 
 # Run diagnostics
-tool-first doctor
+toolscout doctor
 
 # Start MCP server
-tool-first mcp serve
+toolscout mcp serve
 ```
 
 ### MCP Tools
@@ -222,7 +222,7 @@ If writing code, state the reason briefly: "Existing tools do not fit because ..
 ## Prohibited Behaviors
 
 - Do not blindly scan the entire filesystem (`find /`, `find ~`).
-- Do not create private tool-memory when `TOOL_FIRST_MEMORY_HOME` exists.
+- Do not create private tool-memory when `TOOLSCOUT_MEMORY_HOME` exists.
 - Do not write LLM guesses as `verified_success` tool-memory.
 - Do not treat tool-memory as Vault current truth.
 - Do not automatically write tool-memory into high-authority Vault directories
@@ -238,24 +238,24 @@ If writing code, state the reason briefly: "Existing tools do not fit because ..
 This skill supports multiple AI agents. See `references/agent-integration.md` for
 the unified guide.
 
-- **Hermes**: Add Tool-First Rule to `~/.hermes/SOUL.md` (see `references/soul-rule-integration.md`).
-- **Claude Code**: Add Tool-First Rule to `~/.claude/CLAUDE.md` (see `references/claude-code-integration.md`).
-- **Codex**: Add Tool-First Rule to your Codex agent config (see `references/agent-integration.md`).
+- **Hermes**: Add ToolScout Rule to `~/.hermes/SOUL.md` (see `references/soul-rule-integration.md`).
+- **Claude Code**: Add ToolScout Rule to `~/.claude/CLAUDE.md` (see `references/claude-code-integration.md`).
+- **Codex**: Add ToolScout Rule to your Codex agent config (see `references/agent-integration.md`).
 
 ## Pitfalls
 
 - **Agent-specific rule required for auto-activation.** The skill ships as a passive reference — it only triggers when explicitly loaded or when a matching rule exists. For Hermes, add a SOUL.md rule. For Claude Code, add a CLAUDE.md rule.
-- **TOOL_FIRST_MEMORY_HOME takes precedence.** If this env var is set, it overrides all config file settings. Do not create private memory homes when it exists.
+- **TOOLSCOUT_MEMORY_HOME takes precedence.** If this env var is set, it overrides all config file settings. Do not create private memory homes when it exists.
 - **Workspace vs installed copy.** If you develop in a separate workspace, remember to sync changes to the installed location:
-  - Hermes: `cp -r . ~/.hermes/skills/devops/tool-first-agent/`
-  - Claude Code: `cp -r . ~/.claude/skills/tool-first-agent/`
-  - Codex: `cp -r . ~/.codex/skills/tool-first-agent/`
-- **macOS GUI apps** may not inherit shell environment variables. Use `launchctl setenv TOOL_FIRST_MEMORY_HOME "/path/to/tool-memory"`.
-- **Path migration verification.** After changing any config path: run `tool-first doctor` and `tool-first memory check-conflicts --json`.
+  - Hermes: `cp -r . ~/.hermes/skills/devops/toolscout/`
+  - Claude Code: `cp -r . ~/.claude/skills/toolscout/`
+  - Codex: `cp -r . ~/.codex/skills/toolscout/`
+- **macOS GUI apps** may not inherit shell environment variables. Use `launchctl setenv TOOLSCOUT_MEMORY_HOME "/path/to/tool-memory"`.
+- **Path migration verification.** After changing any config path: run `toolscout doctor` and `toolscout memory check-conflicts --json`.
 
 ## References
 
-- **`references/memory-home-resolution.md`** — TOOL_FIRST_MEMORY_HOME resolution rules and marker specs.
+- **`references/memory-home-resolution.md`** — TOOLSCOUT_MEMORY_HOME resolution rules and marker specs.
 - **`references/memory-migration-guide.md`** — Migrating from old memory paths.
 - **`references/agent-integration.md`** — Unified multi-agent integration guide.
 - **`references/claude-code-integration.md`** — CLAUDE.md rule for auto-activation.

@@ -9,13 +9,13 @@ mod resolver;
 
 use clap::{Parser, Subcommand};
 
-/// tool-first: fast local runtime core for tool-first-agent.
+/// toolscout: fast local runtime core for ToolScout.
 ///
 /// SKILL.md = canonical execution rule source
 /// Rust runtime = CLI + MCP for shared file-based tool-memory
-/// tool-memory = shared runtime infrastructure resolved by TOOL_FIRST_MEMORY_HOME
+/// tool-memory = shared runtime infrastructure resolved by TOOLSCOUT_MEMORY_HOME
 #[derive(Parser)]
-#[command(name = "tool-first", version, about)]
+#[command(name = "toolscout", version, about)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -189,7 +189,7 @@ fn main() {
         Commands::Doctor => cmd_doctor(),
         Commands::Mcp { action } => match action {
             Some(McpCommands::Serve) | None => {
-                eprintln!("tool-first MCP server starting on stdio...");
+                eprintln!("toolscout MCP server starting on stdio...");
                 mcp::run_stdio_server()
             }
         },
@@ -252,21 +252,21 @@ fn cmd_memory_resolve(json_output: bool) -> Result<(), String> {
     let memory_home = resolver::resolve_memory_home(&cfg);
     let has_marker = resolver::has_marker(&memory_home);
     let env_home =
-        std::env::var("TOOL_FIRST_MEMORY_HOME").unwrap_or_else(|_| "(not set)".to_string());
+        std::env::var("TOOLSCOUT_MEMORY_HOME").unwrap_or_else(|_| "(not set)".to_string());
 
     if json_output {
         println!(
             "{}",
             serde_json::to_string_pretty(&serde_json::json!({
                 "memory_home": memory_home.to_string_lossy(),
-                "TOOL_FIRST_MEMORY_HOME": env_home,
+                "TOOLSCOUT_MEMORY_HOME": env_home,
                 "has_marker": has_marker,
             }))
             .unwrap()
         );
     } else {
-        println!("memory_home:          {}", memory_home.display());
-        println!("TOOL_FIRST_MEMORY_HOME: {env_home}");
+        println!("memory_home:           {}", memory_home.display());
+        println!("TOOLSCOUT_MEMORY_HOME: {env_home}");
         println!("has .tool-memory-home:  {has_marker}");
     }
     Ok(())
@@ -380,7 +380,7 @@ fn cmd_memory_check_conflicts(json_output: bool) -> Result<(), String> {
         }
         if conflict {
             println!(
-                "\nWARNING: Multiple memory homes found. Set TOOL_FIRST_MEMORY_HOME to resolve."
+                "\nWARNING: Multiple memory homes found. Set TOOLSCOUT_MEMORY_HOME to resolve."
             );
         } else {
             println!("\nNo conflicts detected.");
@@ -512,12 +512,12 @@ fn cmd_doctor() -> Result<(), String> {
 
     let reg = registry::load_registry().unwrap_or_default();
 
-    println!("=== tool-first doctor ===");
+    println!("=== toolscout doctor ===");
     println!();
     println!("memory_home:            {}", memory_home.display());
     println!(
-        "TOOL_FIRST_MEMORY_HOME: {}",
-        std::env::var("TOOL_FIRST_MEMORY_HOME").unwrap_or_else(|_| "(not set)".to_string())
+        "TOOLSCOUT_MEMORY_HOME: {}",
+        std::env::var("TOOLSCOUT_MEMORY_HOME").unwrap_or_else(|_| "(not set)".to_string())
     );
     println!(".tool-memory-home:      {has_marker}");
     println!("adapter:                file");
@@ -529,7 +529,7 @@ fn cmd_doctor() -> Result<(), String> {
     println!("{}", serde_json::to_string_pretty(&backend_info).unwrap());
     println!();
     if conflict_count > 1 {
-        println!("WARNING: Multiple memory home candidates found. Run `tool-first memory check-conflicts`.");
+        println!("WARNING: Multiple memory home candidates found. Run `toolscout memory check-conflicts`.");
     }
     println!("=== doctor complete ===");
     Ok(())
