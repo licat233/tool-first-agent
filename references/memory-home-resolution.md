@@ -15,40 +15,33 @@ It is **not** current truth. It is **not** user-approved long-term memory. It is
 
 | Priority | Source | Description |
 |----------|--------|-------------|
-| 1 | `TOOLSCOUT_MEMORY_HOME` env var | Highest priority. All agents use this. |
+| 1 | `TOOLSCOUT_MEMORY_HOME` env var | Optional explicit override. |
 | 2 | `memory_home` in config.yaml | User-level config. |
 | 3 | `file.base_dir` in config.yaml | Legacy compat. |
 | 4 | Default | `~/.config/toolscout/tool-memory` |
 
 ### Rules
 
-1. If `TOOLSCOUT_MEMORY_HOME` is set, treat it as the canonical home.
-2. Do not create private tool-memory elsewhere.
-3. Do not silently fall back while it exists.
-4. If the directory does not exist, initialize it after confirming intent with `toolscout memory init`.
-5. Add `.tool-memory-home` marker if missing.
+1. Use `~/.config/toolscout/tool-memory` for normal installation.
+2. Do not ask users to choose a memory home during normal installation.
+3. Do not create Obsidian- or Vault-specific memory homes by default.
+4. If `TOOLSCOUT_MEMORY_HOME` is intentionally set, treat it as the canonical
+   override and do not silently fall back.
+5. If the chosen directory does not exist, initialize it with
+   `toolscout memory init`.
+6. Add `.tool-memory-home` marker if missing.
 
-## Recommended Locations
-
-### Vault-external
-
-```
-~/AI-Runtime/toolscout/tool-memory
-```
-
-### ARMOR Enterprise Vault
+## Default Location
 
 ```
-<ARMORVault>/92-Logs/_shared/tool-memory/
+~/.config/toolscout/tool-memory
 ```
 
-### PAMA Personal Vault
+Custom paths are advanced overrides only. Obsidian users should still use the
+default path unless they explicitly choose to keep runtime infrastructure inside
+a Vault.
 
-```
-<PAMAVault>/08-Working-Memory/_runtime/tool-memory/
-```
-
-### Prohibited
+## Prohibited High-Authority Paths
 
 Do not place tool-memory in:
 - `01-Facts/`

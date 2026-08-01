@@ -35,7 +35,6 @@ mcp_servers:
     command: "/path/to/toolscout"
     args: ["mcp", "serve"]
     env:
-      TOOLSCOUT_MEMORY_HOME: "/path/to/tool-memory"
       TOOLSCOUT_AGENT_NAME: "hermes"
     timeout: 120
     connect_timeout: 60
@@ -67,7 +66,6 @@ available across all projects:
 ```bash
 claude mcp add toolscout \
   --scope user \
-  -e TOOLSCOUT_MEMORY_HOME="/path/to/tool-memory" \
   -e TOOLSCOUT_AGENT_NAME="claude-code" \
   -- /path/to/toolscout mcp serve
 ```
@@ -90,7 +88,6 @@ Codex also supports MCP natively:
 
 ```bash
 codex mcp add toolscout \
-  --env TOOLSCOUT_MEMORY_HOME="/path/to/tool-memory" \
   --env TOOLSCOUT_AGENT_NAME="codex" \
   -- /path/to/toolscout mcp serve
 ```
@@ -111,7 +108,7 @@ codex mcp remove toolscout
 
 | Variable | Purpose |
 |----------|---------|
-| `TOOLSCOUT_MEMORY_HOME` | Canonical shared runtime tool-memory home |
+| `TOOLSCOUT_MEMORY_HOME` | Optional override for the default tool-memory home |
 | `TOOLSCOUT_MEMORY_CONFIG` | Override config file location |
 | `TOOLSCOUT_AGENT_NAME` | Agent name for records |
 

@@ -12,9 +12,11 @@
 
 All agents must:
 
-1. Read `TOOLSCOUT_MEMORY_HOME` before any tool-memory operation.
-2. Use the shared file-based runtime tool-memory home.
-3. Not create private tool-memory when `TOOLSCOUT_MEMORY_HOME` exists.
+1. Use the default shared file-based runtime tool-memory home:
+   `~/.config/toolscout/tool-memory`.
+2. Treat `TOOLSCOUT_MEMORY_HOME` as an optional explicit override only.
+3. Not create private, agent-specific, Obsidian-specific, or Vault-specific
+   tool-memory during normal installation.
 4. Not treat tool-memory as authoritative Vault memory.
 5. Not default-create `02-Rules/Tool-Inventory`.
 6. Not copy full SKILL.md to a Vault rule directory.
@@ -38,17 +40,16 @@ toolscout doctor
 
 | Variable | Purpose |
 |----------|---------|
-| `TOOLSCOUT_MEMORY_HOME` | Canonical shared runtime tool-memory home (highest priority) |
+| `TOOLSCOUT_MEMORY_HOME` | Optional override for the default tool-memory home |
 | `TOOLSCOUT_MEMORY_CONFIG` | Override config file location |
 | `TOOLSCOUT_AGENT_NAME` | Agent name for records (`hermes`, `claude-code`, `codex`) |
 
 ```bash
-# In shell profile (~/.zshrc, ~/.bashrc, etc.)
-export TOOLSCOUT_MEMORY_HOME="/path/to/tool-memory"
 export TOOLSCOUT_AGENT_NAME="claude-code"
 
-# For macOS GUI apps:
-launchctl setenv TOOLSCOUT_MEMORY_HOME "/path/to/tool-memory"
+# Optional custom path only:
+# export TOOLSCOUT_MEMORY_HOME="/path/to/tool-memory"
+# launchctl setenv TOOLSCOUT_MEMORY_HOME "/path/to/tool-memory"
 ```
 
 ## Hermes Agent
@@ -102,7 +103,7 @@ After installation, report:
 - Which agent was configured
 - Where toolscout was installed
 - Which tool-memory path is being used
-- Whether `TOOLSCOUT_MEMORY_HOME` was detected
+- Whether `TOOLSCOUT_MEMORY_HOME` is unset or intentionally overriding the default
 - Whether `.tool-memory-home` marker exists
 - Any legacy or conflicting tool-memory paths found
 - Which agent config file was updated

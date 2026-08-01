@@ -54,8 +54,10 @@ cp target/release/toolscout /usr/local/bin/
 ## Environment Variables
 
 ```bash
-export TOOLSCOUT_MEMORY_HOME="/path/to/tool-memory"
 export TOOLSCOUT_AGENT_NAME="hermes"
+
+# Optional custom path only:
+# export TOOLSCOUT_MEMORY_HOME="/path/to/tool-memory"
 ```
 
 ## MCP Integration (Optional)

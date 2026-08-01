@@ -58,10 +58,10 @@ git clone https://github.com/licat233/toolscout.git ~/.claude/skills/toolscout
 ## Environment Variables
 
 ```bash
-export TOOLSCOUT_MEMORY_HOME="/path/to/tool-memory"
 export TOOLSCOUT_AGENT_NAME="claude-code"
 
-# For macOS GUI apps:
-launchctl setenv TOOLSCOUT_MEMORY_HOME "/path/to/tool-memory"
+# Optional custom path only:
+# export TOOLSCOUT_MEMORY_HOME="/path/to/tool-memory"
+# launchctl setenv TOOLSCOUT_MEMORY_HOME "/path/to/tool-memory"
 launchctl setenv TOOLSCOUT_AGENT_NAME "claude-code"
 ```

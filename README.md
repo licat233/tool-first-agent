@@ -34,7 +34,8 @@ toolscout = Rust runtime core + SKILL.md rule layer + shared tool-memory
 
 - `SKILL.md` is the canonical execution rule source for agents.
 - The Rust runtime core provides fast local CLI and MCP access.
-- `tool-memory` is shared runtime infrastructure resolved by `TOOLSCOUT_MEMORY_HOME`.
+- `tool-memory` is shared runtime infrastructure stored by default at
+  `~/.config/toolscout/tool-memory`.
 - `tool-memory` is not authoritative Vault memory and must not be promoted into high-authority memory automatically.
 
 ### Three-Layer Design
@@ -43,13 +44,13 @@ toolscout = Rust runtime core + SKILL.md rule layer + shared tool-memory
 |-------|---------------|
 | **SKILL.md** | "How the agent should behave" — sole execution rule source |
 | **Rust runtime core** | "Fast, stable queries and writes" — CLI / MCP / registry / detection / memory |
-| **shared tool-memory** | "Multi-agent tool experience" — resolved by `TOOLSCOUT_MEMORY_HOME` |
+| **shared tool-memory** | "Multi-agent tool experience" — defaults to `~/.config/toolscout/tool-memory` |
 
 **Do not default-create `02-Rules/Tool-Inventory`.** The executable toolscout behavior belongs in `SKILL.md`. A Vault rule may optionally contain a short reference pointing to `SKILL.md`, but must not duplicate the full toolscout rules.
 
 ### What the Rust Core Does
 
-- Reads `TOOLSCOUT_MEMORY_HOME`
+- Resolves the default tool-memory home
 - Parses `~/.config/toolscout/config.yaml`
 - Validates `.tool-memory-home` marker
 - Handles `.tool-memory-redirect` for legacy paths
@@ -129,7 +130,7 @@ toolscout tools detect --category document --record --json
 ```bash
 toolscout advise --task <operation> --intent avoid_custom_code --category <category> --json
 toolscout memory resolve --json          # Resolve canonical memory home
-toolscout memory init --json             # Initialize the chosen memory home after explicit intent
+toolscout memory init --json             # Initialize the default memory home
 toolscout memory recall --task <text>    # Search tool-memory
 toolscout memory record '<json>' --json  # Persist a record
 toolscout memory check-conflicts --json  # Check for path conflicts
@@ -181,7 +182,9 @@ The file adapter stores each tool-memory record as an individual JSON file:
 - Zero dependencies, fully inspectable, Git-friendly
 - Filename: `{timestamp}-{agent}-{tool}-{task}-{uuid}.json`
 
-Obsidian users should point `TOOLSCOUT_MEMORY_HOME` to a low-authority runtime path inside their vault (e.g. `<Vault>/92-Logs/_shared/tool-memory/`).
+The default tool-memory home is `~/.config/toolscout/tool-memory` for all users,
+including users who also use Obsidian. Keep tool-memory outside high-authority
+Vault paths unless the user explicitly chooses a custom runtime location.
 
 ### Registry
 
@@ -223,11 +226,13 @@ write_policy:
 
 | Variable | Purpose |
 |----------|---------|
-| `TOOLSCOUT_MEMORY_HOME` | Canonical shared runtime tool-memory home (highest priority) |
+| `TOOLSCOUT_MEMORY_HOME` | Optional override for the default tool-memory home |
 | `TOOLSCOUT_MEMORY_CONFIG` | Override config file location |
 | `TOOLSCOUT_AGENT_NAME` | Agent name for records (`hermes`, `claude-code`, `codex`) |
 
-macOS GUI apps may not inherit shell env vars. Use `launchctl setenv`:
+Most users do not need to set `TOOLSCOUT_MEMORY_HOME`. If you intentionally use
+a custom memory home, macOS GUI apps may not inherit shell env vars. Use
+`launchctl setenv` only for that custom path:
 
 ```bash
 launchctl setenv TOOLSCOUT_MEMORY_HOME "/path/to/tool-memory"
@@ -281,7 +286,8 @@ Architecture rules:
 - `tool-memory` is shared runtime infrastructure.
 - `tool-memory` is not current truth, not authoritative Vault memory, and not a
   replacement for AI memory governance.
-- Do not create private tool-memory when `TOOLSCOUT_MEMORY_HOME` exists.
+- Use the default memory home at `~/.config/toolscout/tool-memory`.
+- Treat `TOOLSCOUT_MEMORY_HOME` as an optional explicit override only.
 - Do not copy the full rules into high-authority Vault paths such as
   `01-Facts/`, `02-Rules/`, `03-Insights/`, or `05-Truth/`.
 - Do not write guessed or hallucinated records into tool-memory.
@@ -365,30 +371,14 @@ If the directory already exists, update it instead of cloning again:
 
   git -C <skill-directory>/toolscout pull
 
-## Step 3: Configure shared tool-memory
+## Step 3: Initialize shared tool-memory
 
-First check whether the user already has a canonical memory home:
+Use the default shared runtime path:
 
-  echo "$TOOLSCOUT_MEMORY_HOME"
-  toolscout memory resolve --json
+  ~/.config/toolscout/tool-memory
 
-If `TOOLSCOUT_MEMORY_HOME` is already set, use it. Do not create another
-private memory home.
-
-If it is not set, ask the user where shared tool-memory should live. Recommend a
-low-authority runtime path, for example:
-
-  ~/AI-Runtime/toolscout/tool-memory
-  <Vault>/92-Logs/_shared/tool-memory
-  <Vault>/08-Working-Memory/_runtime/tool-memory
-
-After the user confirms the path, set it for shells:
-
-  export TOOLSCOUT_MEMORY_HOME="<confirmed-path>"
-
-For macOS GUI apps, also set launchd environment variables:
-
-  launchctl setenv TOOLSCOUT_MEMORY_HOME "<confirmed-path>"
+Do not ask the user to choose a tool-memory location during normal installation.
+Do not create an Obsidian- or Vault-specific path by default.
 
 Set the agent name:
 
@@ -407,7 +397,7 @@ Hermes:
   export TOOLSCOUT_AGENT_NAME="hermes"
   launchctl setenv TOOLSCOUT_AGENT_NAME "hermes"
 
-Initialize the memory home only after the path is confirmed:
+Initialize the default memory home:
 
   toolscout memory init --json
   toolscout doctor
@@ -444,7 +434,8 @@ Use this rule text:
   If writing code, briefly state why: "No existing tool fits because ..."
 
   tool-memory is shared runtime infrastructure, not authoritative memory.
-  Do not create private tool-memory when TOOLSCOUT_MEMORY_HOME exists.
+  Use the default memory home at ~/.config/toolscout/tool-memory.
+  Treat TOOLSCOUT_MEMORY_HOME as an optional explicit override only.
   Do not write guessed tool-memory records.
   SKILL.md is the sole execution rule source.
 
@@ -477,7 +468,6 @@ Add to `~/.hermes/config.yaml` under `mcp_servers`:
       command: "/absolute/path/to/toolscout"
       args: ["mcp", "serve"]
       env:
-        TOOLSCOUT_MEMORY_HOME: "<confirmed-path>"
         TOOLSCOUT_AGENT_NAME: "hermes"
       timeout: 120
       connect_timeout: 60
@@ -498,14 +488,12 @@ Claude Code:
 
   claude mcp add toolscout \
     --scope user \
-    -e TOOLSCOUT_MEMORY_HOME="<confirmed-path>" \
     -e TOOLSCOUT_AGENT_NAME="claude-code" \
     -- /absolute/path/to/toolscout mcp serve
 
 Codex:
 
   codex mcp add toolscout \
-    --env TOOLSCOUT_MEMORY_HOME="<confirmed-path>" \
     --env TOOLSCOUT_AGENT_NAME="codex" \
     -- /absolute/path/to/toolscout mcp serve
 
@@ -546,7 +534,8 @@ Report back with:
 - Binary version: output of `toolscout --version`
 - Skill directory used
 - Agent rule file updated
-- TOOLSCOUT_MEMORY_HOME value
+- tool-memory path from `toolscout memory resolve --json`
+- whether `TOOLSCOUT_MEMORY_HOME` is unset or intentionally overriding the default
 - Whether `.tool-memory-home` exists
 - Whether `toolscout doctor` passed
 - Whether `toolscout advise` returned a useful recommendation
@@ -569,7 +558,7 @@ toolscout/
     └── src/
         ├── main.rs                     # CLI entry point
         ├── config.rs                   # config loading + resolution
-        ├── resolver.rs                 # TOOLSCOUT_MEMORY_HOME + markers
+        ├── resolver.rs                 # default memory home + optional override markers
         ├── registry.rs                 # registry query
         ├── advice.rs                   # scoped pre-code tool recommendation
         ├── detect.rs                   # tool detection
@@ -602,7 +591,8 @@ toolscout = Rust 运行时核心 + SKILL.md 规则层 + 共享工具记忆
 
 - `SKILL.md` 是 Agent 的唯一执行规则源。
 - Rust 运行时核心提供快速的本地 CLI 和 MCP 访问。
-- `tool-memory` 是通过 `TOOLSCOUT_MEMORY_HOME` 定位的共享运行时基础设施。
+- `tool-memory` 是共享运行时基础设施，默认保存在
+  `~/.config/toolscout/tool-memory`。
 - `tool-memory` 不是权威 Vault 记忆，不得自动提升为高权威记忆。
 
 ### 三层设计
@@ -611,7 +601,7 @@ toolscout = Rust 运行时核心 + SKILL.md 规则层 + 共享工具记忆
 |----|------|
 | **SKILL.md** | "Agent 应该怎么做" — 唯一执行规则源 |
 | **Rust 运行时核心** | "高频、稳定、快速的查询和写入" — CLI / MCP / 注册表 / 检测 / 记忆 |
-| **共享工具记忆** | "多 Agent 共享工具经验" — 通过 `TOOLSCOUT_MEMORY_HOME` 定位 |
+| **共享工具记忆** | "多 Agent 共享工具经验" — 默认位于 `~/.config/toolscout/tool-memory` |
 
 **不要默认创建 `02-Rules/Tool-Inventory`。** 可执行的 toolscout 行为属于 `SKILL.md`。
 
@@ -708,13 +698,14 @@ toolscout mcp serve                       # 启动 MCP stdio 服务器
 - 零依赖，可直接查看，Git 友好
 - 文件名格式：`{时间戳}-{agent}-{工具}-{任务类型}-{uuid}.json`
 
-Obsidian 用户应将 `TOOLSCOUT_MEMORY_HOME` 指向 vault 内的低权威 runtime 路径（如 `<Vault>/92-Logs/_shared/tool-memory/`）。
+所有用户默认使用 `~/.config/toolscout/tool-memory`，包括 Obsidian 用户。
+除非用户明确选择自定义 runtime 路径，否则不要把 tool-memory 放进 Vault。
 
 ### 环境变量
 
 | 变量 | 用途 |
 |------|------|
-| `TOOLSCOUT_MEMORY_HOME` | 共享工具记忆主目录（最高优先级） |
+| `TOOLSCOUT_MEMORY_HOME` | 可选：覆盖默认工具记忆目录 |
 | `TOOLSCOUT_MEMORY_CONFIG` | 覆盖配置文件位置 |
 | `TOOLSCOUT_AGENT_NAME` | 记录中的 Agent 名称（`hermes`、`claude-code`、`codex`） |
 

@@ -48,7 +48,7 @@ toolscout/
     └── src/
         ├── main.rs             # CLI entry point
         ├── config.rs           # config loading
-        ├── resolver.rs         # TOOLSCOUT_MEMORY_HOME + markers
+        ├── resolver.rs         # default memory home + optional override markers
         ├── registry.rs         # registry query
         ├── detect.rs           # tool detection
         ├── memory.rs           # MemoryRecord struct
@@ -93,12 +93,20 @@ memory automatically.
 All agents (Codex, Claude Code, Hermes) share one canonical runtime tool-memory home.
 Each record includes `source_agent` to identify which agent wrote it.
 
-## TOOLSCOUT_MEMORY_HOME
+## Tool-Memory Home
 
-This environment variable is the highest priority path entry for tool-memory.
+Default path:
+
+```text
+~/.config/toolscout/tool-memory
+```
+
+Use this default for normal installation, including non-Obsidian and Obsidian
+users. Do not ask the user to choose a tool-memory location unless they
+explicitly request a custom path or migration from an old path.
 
 Resolution priority:
-1. `TOOLSCOUT_MEMORY_HOME` env var
+1. `TOOLSCOUT_MEMORY_HOME` env var, only when intentionally set as an override
 2. `memory_home` key in `~/.config/toolscout/config.yaml`
 3. `file.base_dir` in config
 4. Default: `~/.config/toolscout/tool-memory`
@@ -126,7 +134,7 @@ Database adapters are intentionally not supported in the baseline design for:
 - lower maintenance cost
 - safer multi-agent writes
 - easier manual inspection
-- better Obsidian compatibility
+- simple default installation across agents
 - better Git backup and diff
 - simpler migration
 - no database locking issues
@@ -137,7 +145,8 @@ See `references/tool-memory-format.md` for the full record schema.
 
 Rules:
 - Agents may share tool-memory.
-- Agents may **not** create private tool-memory when `TOOLSCOUT_MEMORY_HOME` exists.
+- Agents may **not** create private tool-memory or Vault-specific homes during
+  normal installation.
 - Agents may **not** treat tool-memory as current truth.
 - Agents may **not** use another agent's execution record as approved SOP.
 - If a tool recipe should become a formal rule, create a proposal or update SKILL.md
@@ -245,7 +254,8 @@ the unified guide.
 ## Pitfalls
 
 - **Agent-specific rule required for auto-activation.** The skill ships as a passive reference — it only triggers when explicitly loaded or when a matching rule exists. For Hermes, add a SOUL.md rule. For Claude Code, add a CLAUDE.md rule.
-- **TOOLSCOUT_MEMORY_HOME takes precedence.** If this env var is set, it overrides all config file settings. Do not create private memory homes when it exists.
+- **Default memory home first.** Use `~/.config/toolscout/tool-memory` unless
+  `TOOLSCOUT_MEMORY_HOME` is intentionally set as an override.
 - **Workspace vs installed copy.** If you develop in a separate workspace, remember to sync changes to the installed location:
   - Hermes: `cp -r . ~/.hermes/skills/devops/toolscout/`
   - Claude Code: `cp -r . ~/.claude/skills/toolscout/`

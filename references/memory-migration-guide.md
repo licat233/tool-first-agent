@@ -13,17 +13,23 @@ canonical shared file-based runtime tool-memory home.
 | `~/.claude/tool-memory/` | Agent-specific |
 | `~/.hermes/tool-memory/` | Agent-specific |
 
-## Step 1: Choose Canonical Runtime Tool-Memory Home
+## Step 1: Use The Canonical Runtime Tool-Memory Home
 
-| Option | Path | Best for |
-|--------|------|----------|
-| Vault-external | `~/AI-Runtime/toolscout/tool-memory` | Clean vault |
-| ARMOR Vault | `<ARMORVault>/92-Logs/_shared/tool-memory/` | Multi-agent ARMOR |
-| PAMA Vault | `<PAMAVault>/08-Working-Memory/_runtime/tool-memory/` | Personal PAMA |
+Default canonical path:
+
+```text
+~/.config/toolscout/tool-memory
+```
+
+Do not choose an Obsidian- or Vault-specific destination by default. Use a
+custom path only when the user explicitly requests it.
 
 Do **not** choose high-authority paths (`01-Facts/`, `02-Rules/`, `03-Insights/`, `05-Truth/`).
 
-## Step 2: Set TOOLSCOUT_MEMORY_HOME
+## Step 2: Optional TOOLSCOUT_MEMORY_HOME Override
+
+Most migrations do not need this environment variable. Set it only when the user
+intentionally chooses a custom memory home:
 
 ```bash
 # In your shell profile (~/.zshrc, ~/.bashrc, etc.)
@@ -61,7 +67,7 @@ mkdir -p "$TOOLSCOUT_MEMORY_HOME/records"
 
 # Copy from old file-based path
 cp ~/.config/tool-inventory/memory/records/*.json \
-   "$TOOLSCOUT_MEMORY_HOME/records/" 2>/dev/null
+   "${TOOLSCOUT_MEMORY_HOME:-$HOME/.config/toolscout/tool-memory}/records/" 2>/dev/null
 ```
 
 ## Step 5: Place Redirect Markers
@@ -71,7 +77,7 @@ OLD_PATH="$HOME/.config/tool-inventory/memory"
 mkdir -p "$OLD_PATH"
 cat > "$OLD_PATH/.tool-memory-redirect" <<EOF
 {
-  "redirect_to": "$TOOLSCOUT_MEMORY_HOME",
+  "redirect_to": "${TOOLSCOUT_MEMORY_HOME:-$HOME/.config/toolscout/tool-memory}",
   "reason": "Canonical tool-memory home moved to shared runtime-infrastructure path.",
   "do_not_write_here": true
 }
@@ -85,7 +91,7 @@ Repeat for each old path.
 Update `~/.config/toolscout/config.yaml`:
 
 ```yaml
-memory_home: "/path/to/chosen/tool-memory"
+memory_home: "~/.config/toolscout/tool-memory"
 canonical: true
 authority: "runtime-infrastructure"
 
